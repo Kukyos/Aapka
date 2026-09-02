@@ -1,0 +1,370 @@
+# Red-flag escalation rules.
+#
+# Gate G4 in 03-requirements.md: a red flag stops the interview and alerts triage
+# staff. It is not a line in a summary the doctor reads forty minutes later.
+#
+# Four design commitments, all of them deliberate:
+#
+#   1. DETERMINISTIC. These are data, evaluated by redflags.py against slots. No
+#      model is consulted. A rule that fires is a rule you can point at, which is
+#      what makes this defensible to a ministry and reproducible in a demo.
+#
+#   2. TUNED FOR RECALL. Every rule below will fire on people who turn out to be
+#      fine. That is the correct trade. A false alarm costs a triage nurse thirty
+#      seconds; a miss costs something that cannot be undone. 04-targets.md sets
+#      no precision target for exactly this reason.
+#
+#   3. EVALUATED AFTER EVERY ANSWER. Never at the end. The engine calls
+#      evaluate() on each answer and returns action=escalate the moment one fires.
+#
+#   4. UPGRADE ONLY. Nothing here can lower a patient's urgency. There is no rule
+#      that says "probably fine" — the system can only move someone up the queue.
+#
+# NOT A DIAGNOSIS. Every `instruction` below tells a human what to DO. None of them
+# names a disease, on screen or in the alert. "Chest pain with breathlessness and
+# sweating" is an observation; "possible myocardial infarction" would be a diagnosis
+# and would violate hard rule 1.
+#
+# CLINICAL REVIEW STATUS: these rules encode widely-taught emergency-department
+# triage patterns. They have NOT yet been reviewed by a practising clinician.
+# That review is a submission blocker — see docs/11-deferred.md D-13.
+
+version: 1
+
+# Severity drives what the kiosk does, not what the patient is told.
+#   immediate — stop the interview, alert triage, show the escalation screen
+#   urgent    — stop the interview, alert triage, escalation screen (same behaviour;
+#               the distinction is for the staff alert and the audit log)
+severities: [immediate, urgent]
+
+rules:
+
+  # ---------------------------------------------------------------- cardiac
+  - id: rf.cardiac.chest_pain_dyspnoea
+    severity: immediate
+    # Named explicitly in the brief: "acute chest pain with dyspnoea".
+    source: "Problem statement 3.3 Module A, red-flag detection example"
+    when:
+      all:
+        - {slot: cc.primary, eq: chest_pain}
+        - {slot: hpi.associated, contains: breathlessness}
+    label:
+      en: "Chest pain with breathlessness"
+      hi: "छाती में दर्द के साथ साँस फूलना"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Chest pain with breathlessness. Patient sent to triage from kiosk."
+
+  - id: rf.cardiac.chest_pain_sweating
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: chest_pain}
+        - {slot: hpi.associated, contains: sweating}
+    label:
+      en: "Chest pain with sweating"
+      hi: "छाती में दर्द के साथ पसीना"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Chest pain with diaphoresis. Patient sent to triage from kiosk."
+
+  - id: rf.cardiac.chest_pain_radiating
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: chest_pain}
+        - {slot: hpi.radiation, in: [to_left_arm, to_jaw]}
+    label:
+      en: "Chest pain spreading to the arm or jaw"
+      hi: "छाती का दर्द हाथ या जबड़े तक फैलना"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Chest pain radiating to left arm or jaw. Patient sent to triage from kiosk."
+
+  - id: rf.cardiac.chest_pain_sudden_severe
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: chest_pain}
+        - {slot: hpi.onset, eq: sudden}
+        - {slot: hpi.severity, gte: 7}
+    label:
+      en: "Sudden severe chest pain"
+      hi: "अचानक तेज़ छाती का दर्द"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Sudden-onset chest pain, severity 7+/10. Patient sent to triage from kiosk."
+
+  # ---------------------------------------------------------------- stroke
+  - id: rf.neuro.stroke_symptoms
+    severity: immediate
+    # Named explicitly in the brief: "stroke symptoms".
+    source: "Problem statement 3.3 Module A, red-flag detection example"
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: weakness_limb}
+        - {slot: ros.danger_signs, contains: vision_change}
+        - {slot: ros.neuro, contains: weakness_limb}
+        - {slot: ros.neuro, contains: vision_change}
+    label:
+      en: "Weakness in a limb, or sudden change in eyesight"
+      hi: "हाथ-पैर में कमज़ोरी, या नज़र में अचानक बदलाव"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Focal neurological symptom reported. Time of onset not established at kiosk. Patient sent to triage."
+
+  - id: rf.neuro.thunderclap_headache
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: headache}
+        - {slot: hpi.onset, eq: sudden}
+        - {slot: hpi.severity, gte: 8}
+    label:
+      en: "Sudden, very severe headache"
+      hi: "अचानक बहुत तेज़ सिर दर्द"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Sudden-onset headache, severity 8+/10. Patient sent to triage from kiosk."
+
+  - id: rf.neuro.headache_fever
+    severity: urgent
+    when:
+      all:
+        - {slot: cc.primary, eq: headache}
+        - {slot: hpi.associated, contains: fever}
+    label:
+      en: "Headache with fever"
+      hi: "सिर दर्द के साथ बुख़ार"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Headache with fever. Patient sent to triage from kiosk."
+
+  - id: rf.neuro.fits
+    severity: immediate
+    when:
+      all:
+        # is_set matters: red flags are evaluated after every answer, and on an unset
+        # slot `not_contains` is vacuously true. Without this the rule fired on the
+        # danger-sign screen, before we had asked whether the patient is epileptic.
+        - {slot: past.conditions, is_set: true}
+        - {slot: past.conditions, not_contains: epilepsy}
+        - any:
+            - {slot: ros.danger_signs, contains: fits}
+            - {slot: ros.neuro, contains: fits}
+    # Guarded on no known epilepsy: a patient with diagnosed epilepsy reporting their
+    # usual fits does not need the queue broken. A first fit does.
+    label:
+      en: "Fits, with no known history of them"
+      hi: "दौरे, जिनका पहले कोई इतिहास नहीं"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Seizure reported with no prior epilepsy history. Patient sent to triage."
+
+  # ---------------------------------------------------------------- respiratory
+  - id: rf.resp.breathlessness_at_rest
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: breathlessness}
+        - {slot: hpi.aggravating, contains: rest}
+    label:
+      en: "Breathless even while resting"
+      hi: "आराम करते हुए भी साँस फूलना"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Dyspnoea at rest. Patient sent to triage from kiosk."
+
+  - id: rf.resp.acute_severe_breathlessness
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: breathlessness}
+        - {slot: hpi.onset, eq: sudden}
+    label:
+      en: "Breathing difficulty that started suddenly"
+      hi: "अचानक शुरू हुई साँस की तकलीफ़"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Acute-onset dyspnoea. Patient sent to triage from kiosk."
+
+  - id: rf.resp.haemoptysis
+    severity: urgent
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: blood_in_sputum}
+        - {slot: ros.cardioresp, contains: blood_in_sputum}
+    label:
+      en: "Coughing up blood"
+      hi: "खाँसी में ख़ून आना"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Haemoptysis reported. Patient sent to triage from kiosk."
+
+  # ---------------------------------------------------------------- bleeding
+  - id: rf.bleed.gi_bleeding
+    severity: immediate
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: blood_in_stool}
+        - {slot: ros.danger_signs, contains: black_stool}
+        - {slot: ros.gi, contains: blood_in_stool}
+        - {slot: ros.gi, contains: black_stool}
+    label:
+      en: "Blood in the stool, or black stool"
+      hi: "शौच में ख़ून, या काला शौच"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Suspected GI bleeding reported. Patient sent to triage from kiosk."
+
+  - id: rf.bleed.haematuria
+    severity: urgent
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: blood_in_urine}
+        - {slot: ros.uro, contains: blood_in_urine}
+    label:
+      en: "Blood in the urine"
+      hi: "पेशाब में ख़ून"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Haematuria reported. Patient sent to triage from kiosk."
+
+  # ---------------------------------------------------------------- abdominal
+  - id: rf.abdo.severe_sudden_abdominal_pain
+    severity: immediate
+    when:
+      all:
+        - {slot: cc.primary, eq: abdominal_pain}
+        - {slot: hpi.onset, eq: sudden}
+        - {slot: hpi.severity, gte: 8}
+    label:
+      en: "Sudden, very severe stomach pain"
+      hi: "अचानक बहुत तेज़ पेट दर्द"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Sudden-onset abdominal pain, severity 8+/10. Patient sent to triage from kiosk."
+
+  - id: rf.abdo.urinary_retention
+    severity: urgent
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: retention}
+        - {slot: ros.uro, contains: retention}
+    label:
+      en: "Not able to pass urine"
+      hi: "पेशाब न आना"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Urinary retention reported. Patient sent to triage from kiosk."
+
+  # ---------------------------------------------------------------- systemic
+  - id: rf.sys.jaundice
+    severity: urgent
+    when:
+      any:
+        - {slot: ros.danger_signs, contains: jaundice}
+        - {slot: ros.gi, contains: jaundice}
+    label:
+      en: "Yellow eyes or skin"
+      hi: "आँखों या त्वचा का पीलापन"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Jaundice reported. Patient sent to triage from kiosk."
+
+  - id: rf.sys.anaphylaxis_history_pattern
+    severity: urgent
+    when:
+      all:
+        - {slot: drugs.allergy_known, in: [drug_allergy, both]}
+        - {slot: hpi.associated, contains: breathlessness}
+    label:
+      en: "Breathing difficulty in someone with a known drug reaction"
+      hi: "जिन्हें दवा से प्रतिक्रिया होती है उनमें साँस की तकलीफ़"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Dyspnoea in patient with known drug allergy. Confirm current exposure. Patient sent to triage."
+
+  - id: rf.sys.extreme_pain_any_site
+    severity: urgent
+    # A catch-all. Someone reporting 9 or 10 out of 10 should not wait behind
+    # forty people regardless of what the complaint is called.
+    when:
+      all:
+        - {slot: hpi.severity, gte: 9}
+    label:
+      en: "Very severe pain"
+      hi: "बहुत तेज़ दर्द"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Pain severity 9+/10 reported at kiosk. Patient sent to triage."
+
+  # ---------------------------------------------------------------- age-weighted
+  - id: rf.age.elderly_chest_pain
+    severity: immediate
+    # Presentation is less typical with age, so the threshold drops. An elderly
+    # patient reporting chest pain at all is escalated without needing a second sign.
+    when:
+      all:
+        - {slot: cc.primary, eq: chest_pain}
+        - {slot: identity.age_band, in: ["60_74", 75_plus]}
+    label:
+      en: "Chest pain in an older patient"
+      hi: "बुज़ुर्ग रोगी में छाती का दर्द"
+    instruction:
+      en: "Please go to the staff desk now. Someone will come to you."
+      hi: "कृपया अभी स्टाफ़ काउंटर पर जाइए। कोई आपके पास आएगा।"
+    staff_alert:
+      en: "Chest pain, patient aged 60+. Presentation may be atypical. Patient sent to triage."
+
+  - id: rf.age.infant_fever
+    severity: urgent
+    when:
+      all:
+        - {slot: identity.age_band, eq: under_18}
+        - {slot: cc.primary, eq: fever}
+        - {slot: hpi.severity, gte: 7}
+    label:
+      en: "High fever in a child"
+      hi: "बच्चे में तेज़ बुख़ार"
+    instruction:
+      en: "Please go to the staff desk. Someone will see you soon."
+      hi: "कृपया स्टाफ़ काउंटर पर जाइए। कोई जल्दी ही आपको देखेगा।"
+    staff_alert:
+      en: "Paediatric patient with fever, severity 7+/10. Patient sent to triage."

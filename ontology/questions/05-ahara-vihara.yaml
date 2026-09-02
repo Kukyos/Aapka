@@ -1,0 +1,123 @@
+# Ahara-Vihara — diet and lifestyle. Named in the brief alongside Dashavidha Pariksha.
+#
+# In classical practice this is where Nidana (causative factors) usually surfaces:
+# the irregular meals, the late nights, the tastes the patient leans on. Kept short —
+# six taps — because it sits behind the Dashavidha block in the budget.
+
+- id: ahara.meal_regularity
+  slot: ahara.meal_regularity
+  section: ahara
+  mode: ayush
+  priority: 120
+  required: false
+  cost_s: 8
+  prompt:
+    en: "Do you eat at regular times?"
+    hi: "क्या आप तय समय पर खाना खाते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: regular_times, icon: meal-regular, label: {en: "Yes, at fixed times", hi: "हाँ, तय समय पर"}}
+      - {value: irregular, icon: meal-irregular, label: {en: "At different times each day", hi: "रोज़ अलग-अलग समय पर"}}
+      - {value: skips_meals, icon: meal-skipped, label: {en: "I often skip meals", hi: "मैं अक्सर खाना छोड़ देता हूँ"}}
+
+- id: ahara.rasa_preference
+  slot: ahara.rasa_preference
+  section: ahara
+  mode: ayush
+  priority: 121
+  required: false
+  cost_s: 14
+  # The six rasas. Classical and public domain. Asked as everyday food examples,
+  # because "do you prefer kashaya rasa" is not a question a patient can answer.
+  prompt:
+    en: "Which tastes do you eat the most of?"
+    hi: "आप किस स्वाद का खाना सबसे ज़्यादा खाते हैं?"
+  help:
+    en: "Choose as many as you like."
+    hi: "जितने चाहें उतने चुनिए।"
+  answer:
+    type: multi_choice
+    options:
+      - {value: madhura, icon: rasa-sweet, label: {en: "Sweet — rice, milk, sugar", hi: "मधुर — चावल, दूध, मीठा"}}
+      - {value: amla, icon: rasa-sour, label: {en: "Sour — curd, tamarind, lemon", hi: "अम्ल — दही, इमली, नींबू"}}
+      - {value: lavana, icon: rasa-salty, label: {en: "Salty — pickles, papad", hi: "लवण — अचार, पापड़"}}
+      - {value: katu, icon: rasa-pungent, label: {en: "Pungent — chilli, pepper, ginger", hi: "कटु — मिर्च, काली मिर्च, अदरक"}}
+      - {value: tikta, icon: rasa-bitter, label: {en: "Bitter — bitter gourd, fenugreek", hi: "तिक्त — करेला, मेथी"}}
+      - {value: kashaya, icon: rasa-astringent, label: {en: "Astringent — pulses, banana, tea", hi: "कषाय — दालें, केला, चाय"}}
+
+- id: ahara.water_intake
+  slot: ahara.water_intake
+  section: ahara
+  mode: ayush
+  priority: 122
+  required: false
+  cost_s: 7
+  prompt:
+    en: "How much water do you drink in a day?"
+    hi: "आप दिन में कितना पानी पीते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: low, icon: water-low, label: {en: "Less than four glasses", hi: "चार गिलास से कम"}}
+      - {value: moderate, icon: water-mid, label: {en: "Around six to eight glasses", hi: "लगभग छह से आठ गिलास"}}
+      - {value: high, icon: water-high, label: {en: "More than eight glasses", hi: "आठ गिलास से ज़्यादा"}}
+
+- id: vihara.activity
+  slot: vihara.activity
+  section: ahara
+  mode: ayush
+  priority: 123
+  required: false
+  cost_s: 8
+  prompt:
+    en: "How much do you move about in a normal day?"
+    hi: "आम दिन में आप कितना चलते-फिरते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: sedentary, icon: activity-none, label: {en: "Hardly at all", hi: "बहुत कम"}}
+      - {value: light, icon: activity-light, label: {en: "A little walking", hi: "थोड़ा चलना-फिरना"}}
+      - {value: moderate, icon: activity-moderate, label: {en: "A fair amount", hi: "ठीक-ठाक"}}
+      - {value: heavy, icon: activity-heavy, label: {en: "Hard physical work every day", hi: "रोज़ भारी शारीरिक काम"}}
+
+- id: vihara.sleep_pattern
+  slot: vihara.sleep_pattern
+  section: ahara
+  mode: ayush
+  priority: 124
+  required: false
+  cost_s: 8
+  # personal.sleep asks about sleep QUALITY; this asks about TIMING. Dinacharya cares
+  # about when, not only how well. They are different slots on purpose.
+  prompt:
+    en: "When do you usually sleep?"
+    hi: "आप आम तौर पर कब सोते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: early_to_bed, icon: sleep-early, label: {en: "Early at night, up early", hi: "जल्दी सोना, जल्दी उठना"}}
+      - {value: late_night, icon: sleep-late, label: {en: "Late at night", hi: "देर रात को"}}
+      - {value: day_sleeping, icon: sleep-day, label: {en: "I also sleep during the day", hi: "मैं दिन में भी सोता हूँ"}}
+      - {value: irregular, icon: sleep-irregular, label: {en: "No fixed time", hi: "कोई तय समय नहीं"}}
+
+- id: vihara.stress
+  slot: vihara.stress
+  section: ahara
+  mode: ayush
+  priority: 125
+  required: false
+  cost_s: 8
+  prompt:
+    en: "How much worry or tension do you carry these days?"
+    hi: "आजकल आप कितनी चिंता या तनाव में रहते हैं?"
+  help:
+    en: "Touch a face. The left is none at all, the right is as much as you can bear."
+    hi: "एक चेहरा छूइए। बाईं ओर बिल्कुल नहीं, दाईं ओर जितना सह सकते हैं उतना।"
+  answer:
+    type: scale
+    min: 0
+    max: 10
+    anchors:
+      low: {en: "None", hi: "बिल्कुल नहीं"}
+      high: {en: "A great deal", hi: "बहुत ज़्यादा"}

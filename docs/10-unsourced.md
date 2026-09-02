@@ -1,0 +1,180 @@
+# Unsourced values ledger
+
+Every value in this system that a judge could check, but that we could not verify
+against a published source. Each one is **structurally present and visibly marked**
+rather than filled with something plausible.
+
+This file exists because the alternative is worse. `03-requirements.md` lists
+"invent our own Prakriti questionnaire" and "fake the ABDM integration" as lose
+conditions, and the people evaluating this submission own the NAMASTE portal. A
+fabricated code is not a shortcut, it is the specific failure mode they are watching
+for. An empty field with a citation trail is defensible; a plausible-looking wrong
+one is not.
+
+Every consumer of these values checks `provenance` and renders anything marked
+`PLACEHOLDER` as pending — never as a code, never as a finding.
+
+Last verified: 2026-09-02
+
+---
+
+## How to read this
+
+| Provenance | Meaning |
+|---|---|
+| `sourced` | Verified against a published, citable source. Safe to display. |
+| `PLACEHOLDER` | Structure only. Rendered as "pending" everywhere it appears. |
+
+`server/tests/test_codes.py` enforces the invariant: anything marked `sourced` must
+have a non-empty value, and anything with a non-empty value must be marked `sourced`.
+You cannot quietly promote a guess.
+
+---
+
+## 1 · NAMASTE morbidity codes — `ontology/codes.yaml`
+
+**Status:** all 14 chief complaints marked `PLACEHOLDER`.
+
+**What we know, and can cite:**
+- The National Ayush Morbidity Codes (NAMC, plus NSMC for Siddha and NUMC for Unani)
+  are real and are the Ministry's own classification.
+- Published figure: **7,340 Ayush morbidity codes**, described in the context of
+  migrating them into the ABDM ecosystem via an ABDM- and FHIR-compliant A-HMIS.
+- Portal: <https://namaste.ayush.gov.in/about-namaste-portal>
+
+**What we could not get:** the code list itself, or the code format. The portal
+publishes an *about* page, a user manual link, dashboards and training material —
+not a downloadable terminology file. No public API was found.
+
+**How to close it:** an account on namaste.ayush.gov.in, then export the NAMC list
+for Ayurveda and map our 14 complaints onto it.
+
+---
+
+## 2 · ICD-11 TM2 codes — `ontology/codes.yaml`
+
+**Status:** all `PLACEHOLDER`, including the dosha findings.
+
+**What we know, and can cite:**
+- ICD-11 Chapter 26 is the supplementary traditional-medicine chapter. It separates
+  traditional medicine **disorders** (disease entities) from **patterns**
+  (functional imbalances identified through traditional diagnostics).
+- Module 1 (East-Asian systems) took effect 1 January 2022. **Module 2 — Ayurveda,
+  Siddha and Unani — was added in 2025.**
+- India has a published roadmap for TM2 implementation:
+  <https://journals.lww.com/ijar/fulltext/2025/10000/india_s_roadmap_for_icd_11_tm2_implementation_.18.aspx>
+
+**The trap we avoided, stated plainly:** the freely downloadable Chapter 26 PDF is
+**Module 1**. Its codes are real and verifiable — `SA00` Hypochondrium pain disorder,
+`SA01` Jaundice disorder, `SA02` Liver distension disorder, and so on through roughly
+470 codes — and they were extracted and read during this work. They are **Traditional
+Chinese Medicine patterns**. Putting them on an Ayurveda intake would be a factual
+error dressed up as diligence, so they are not used.
+
+**What we could not get:** the TM2 linearisation. The WHO ICD-11 browser is
+JavaScript-rendered and returns an application shell to a plain HTTP client; the ICD
+API requires OAuth client credentials.
+
+**How to close it:** apply for free ICD-11 API credentials at
+<https://icd.who.int/icdapi>, then pull the TM2 linearisation.
+
+---
+
+## 3 · ICD-11 MMS biomedical codes — `ontology/codes.yaml`
+
+**Status:** `PLACEHOLDER`. The `term` field carries the standard English term where
+we are confident of the wording; the `code` field is empty in every case.
+
+**Why the terms but not the codes:** the term is a label, and being wrong about it is
+visible and harmless. A code is an assertion about a classification we have not read.
+Same API credentials close this as item 2.
+
+---
+
+## 4 · CCRAS Prakriti Assessment Scale — `ontology/questions/04-ayush-dashavidha.yaml`
+
+**Status:** `ayush.prakriti_screen` is an abbreviated 9-item screen, marked
+`PLACEHOLDER`, and labelled "Prakriti screen (abbreviated)" wherever it is displayed.
+
+**What we know, and can cite:**
+- CCRAS has developed and validated a standardized Prakriti Assessment Scale.
+- Its published structure: **91 predictors grouped into 30 domains across four traits**
+  — physical, physiological, psychological and behavioural. Of the 91, **31 are
+  Vatika, 29 Pittika and 32 Kaphaja**.
+- Validated for face, content, construct and criterion validity, with intra- and
+  inter-rater reliability tested using the Kappa statistic.
+- Administered through the AYUR Prakriti web portal: <http://ccras.res.in/ccras_pas/>
+- Paper: *Development of a standardized assessment scale for assessing Prakriti
+  (psychosomatic constitution)*, AYU 2022. The publisher returns HTTP 402 to
+  non-subscribers.
+- A related public dataset, Prakriti200 (arXiv 2510.06262), uses a 24-item
+  multiple-choice questionnaire following AYUSH/CCRAS guidelines, but **does not
+  reproduce the item text** — only the domains: physical, physiological, psychological.
+
+**What we could not get:** the 91 items, their response options, or the scoring
+weights. Neither the paper nor the dataset publication reproduces them.
+
+**What we did instead:** built a 9-item screen from *classical, public-domain*
+Dashavidha Pariksha descriptions — three cues each for Vata, Pitta and Kapha across
+build, appetite and sleep. It is not the CCRAS instrument and does not claim to be.
+
+**Two rules this places on everyone touching the code:**
+1. Nothing may present this as a Prakriti **determination**. It is a screen. The
+   doctor screen renders it as "Prakriti screen (abbreviated), patient-reported".
+2. When the CCRAS instrument is obtained, `04-ayush-dashavidha.yaml` is **replaced
+   wholesale**, not edited. Blending our wording into theirs would produce something
+   that is neither, and would be the exact thing this file exists to prevent.
+
+---
+
+## 5 · Sara, Samhanana and Pramana are self-reported
+
+**Status:** `sourced` as a design decision, flagged as a limitation.
+
+In classical practice these three are **clinician-observed**, not patient-reported —
+Sara in particular is assessed by examining tissue quality. A kiosk cannot observe.
+Each of these nodes carries `self_report_proxy: true`, and the doctor screen marks
+them "patient-reported" so they are never mistaken for examination findings. The
+practitioner confirms or overrides them in seconds, which is the correct division of
+labour anyway.
+
+---
+
+## 6 · Lab reference ranges — `server/aapka/documents.py`
+
+**Status:** a small hand-entered set covering the analytes that appear on common
+Indian OPD lab reports.
+
+Reference ranges are **assay- and laboratory-specific**, which is why every real lab
+report prints its own ranges next to the values. The correct long-term behaviour is
+to read the range off the document being scanned rather than from a table, and the
+extractor already captures a printed range when one is present. The table is the
+fallback for documents that omit them.
+
+**How to close it:** prefer the document's own printed range; keep the table only as
+a fallback, sourced from the demo hospital's lab.
+
+---
+
+## 7 · Drug interactions — `server/aapka/documents.py`
+
+**Status:** a small curated pair list, not a pharmacological database.
+
+The brief asks for "potential drug interactions" to be flagged. A real interaction
+database is licensed. What is implemented catches a handful of well-documented,
+clinically obvious pairs and is labelled on the doctor screen as
+"screening only — not a complete interaction check".
+
+**How to close it:** license a dataset, or narrow the claim to "flag for pharmacist
+review", which is arguably the more honest scope for an intake terminal regardless.
+
+---
+
+## Summary for the pitch
+
+Stated as a strength, because it is one:
+
+> Every code slot in our output is present and correctly typed. None of them is
+> filled with a guess. We know exactly which four sources close the gaps — a NAMASTE
+> portal account, ICD-11 API credentials, the CCRAS manual, and the deploying
+> hospital's own lab ranges — and none of them requires a change to the schema.

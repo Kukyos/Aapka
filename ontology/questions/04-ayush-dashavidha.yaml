@@ -1,0 +1,321 @@
+# Dashavidha Pariksha — the ten-fold examination, all ten parameters named in the
+# brief: Prakriti, Vikriti, Sara, Samhanana, Pramana, Satmya, Sattva, Ahara Shakti,
+# Vyayama Shakti, Vaya.
+#
+# This block is the reason the problem statement exists. Section 1.1 says capturing
+# this depth manually within OPD time is "effectively impossible, forcing practitioners
+# to abbreviate the very assessment that defines personalized Ayurvedic care." A kiosk
+# with a four-minute budget and no queue behind it is exactly the right place to take it.
+#
+# ---------------------------------------------------------------------------------
+# PROVENANCE — read before editing
+#
+# The response options below are phrased from CLASSICAL, PUBLIC-DOMAIN Dashavidha
+# Pariksha descriptions. They are NOT the CCRAS standardized Prakriti Assessment
+# Scale, which is 91 predictors across 30 domains in 4 traits (physical, physiological,
+# psychological, behavioural) and is not publicly downloadable.
+#
+# Two rules follow, and neither is negotiable:
+#   1. Nothing here may be presented as a Prakriti *determination*. It is a screen.
+#      The doctor screen renders it as "Prakriti screen (abbreviated)" for this reason.
+#   2. When the CCRAS instrument is obtained, this file is replaced wholesale rather
+#      than edited. Do not blend our wording with theirs.
+#
+# See docs/10-unsourced.md and docs/11-deferred.md D-06.
+# ---------------------------------------------------------------------------------
+#
+# Priority band 90-119 puts this AHEAD of the review of systems (130+). That is
+# decision D3 in 06-decisions.md — AYUSH-first — expressed as an ordering. When the
+# budget runs out, the ROS sweep is what gets displaced, not the Dashavidha block.
+
+# ------------------------------------------------------------------ 1. Prakriti
+- id: ayush.prakriti_screen
+  slot: ayush.prakriti_screen
+  section: ayush
+  mode: ayush
+  priority: 42
+  required: false
+  cost_s: 20
+  provenance: "PLACEHOLDER — abbreviated classical screen, not the CCRAS PAS. See docs/10-unsourced.md"
+  prompt:
+    en: "Which of these sound like you, most of the time?"
+    hi: "इनमें से कौन सी बातें आप पर ज़्यादातर लागू होती हैं?"
+  help:
+    en: "Think about how you usually are, not how you are today. Choose as many as fit."
+    hi: "आज कैसे हैं यह नहीं, आम तौर पर कैसे रहते हैं यह सोचिए। जितनी बातें सही लगें उतनी चुनिए।"
+  answer:
+    type: multi_choice
+    options:
+      - {value: vata_lean_dry_restless, icon: prakriti-vata-build,
+         label: {en: "I am thin, my skin is dry, I find it hard to sit still", hi: "मैं दुबला-पतला हूँ, त्वचा रूखी है, एक जगह टिकना मुश्किल लगता है"}}
+      - {value: vata_variable_appetite, icon: prakriti-vata-appetite,
+         label: {en: "My appetite changes a lot from day to day", hi: "मेरी भूख रोज़ बदलती रहती है"}}
+      - {value: vata_light_sleep, icon: prakriti-vata-sleep,
+         label: {en: "I sleep lightly and wake easily", hi: "मेरी नींद हल्की है, ज़रा सी आहट से खुल जाती है"}}
+      - {value: pitta_sharp_appetite, icon: prakriti-pitta-appetite,
+         label: {en: "I get very hungry and cannot skip a meal", hi: "मुझे तेज़ भूख लगती है, खाना छोड़ नहीं सकता"}}
+      - {value: pitta_warm_intolerant, icon: prakriti-pitta-heat,
+         label: {en: "I feel warm easily and cannot tolerate heat", hi: "मुझे जल्दी गर्मी लगती है, गर्मी बर्दाश्त नहीं होती"}}
+      - {value: pitta_irritable, icon: prakriti-pitta-temper,
+         label: {en: "I get irritated quickly", hi: "मुझे जल्दी गुस्सा आ जाता है"}}
+      - {value: kapha_heavy_build, icon: prakriti-kapha-build,
+         label: {en: "I have a heavy, solid build and gain weight easily", hi: "मेरा शरीर भारी है, वज़न जल्दी बढ़ता है"}}
+      - {value: kapha_slow_digestion, icon: prakriti-kapha-digestion,
+         label: {en: "My digestion is slow and I feel heavy after eating", hi: "मेरा पाचन धीमा है, खाने के बाद भारीपन लगता है"}}
+      - {value: kapha_deep_sleep, icon: prakriti-kapha-sleep,
+         label: {en: "I sleep deeply and for a long time", hi: "मैं गहरी और लंबी नींद सोता हूँ"}}
+
+# ------------------------------------------------------------------ 2. Vikriti
+- id: ayush.vikriti
+  slot: ayush.vikriti
+  section: ayush
+  mode: ayush
+  priority: 43
+  required: false
+  cost_s: 14
+  # Vikriti is the current deviation, so this asks about NOW — deliberately worded
+  # against ayush.prakriti_screen, which asks about the patient's usual state.
+  prompt:
+    en: "And right now, which of these have changed for you recently?"
+    hi: "और अभी हाल में, इनमें से क्या बदला है?"
+  answer:
+    type: multi_choice
+    exclusive_value: unclear
+    options:
+      - {value: vata_aggravated, icon: vikriti-vata,
+         label: {en: "More gas, dryness, restlessness or broken sleep than usual", hi: "आम से ज़्यादा गैस, रूखापन, बेचैनी या टूटी नींद"}}
+      - {value: pitta_aggravated, icon: vikriti-pitta,
+         label: {en: "More burning, acidity, heat or anger than usual", hi: "आम से ज़्यादा जलन, अम्लता, गर्मी या गुस्सा"}}
+      - {value: kapha_aggravated, icon: vikriti-kapha,
+         label: {en: "More heaviness, congestion, sluggishness or sweetness in the mouth", hi: "आम से ज़्यादा भारीपन, कफ़, सुस्ती या मुँह में मिठास"}}
+      - {value: unclear, icon: unsure,
+         label: {en: "Nothing has changed particularly", hi: "कुछ ख़ास नहीं बदला"}}
+
+# ------------------------------------------------------------------ 3. Sara
+- id: ayush.sara
+  slot: ayush.sara
+  section: ayush
+  mode: ayush
+  priority: 80
+  required: false
+  cost_s: 10
+  # Sara is tissue quality. Clinician-observed in classical practice; a self-report
+  # proxy is honest only if labelled as one — the doctor screen marks it
+  # "patient-reported" so it is never mistaken for an examination finding.
+  self_report_proxy: true
+  prompt:
+    en: "In general, how strong and well-built do you feel your body is?"
+    hi: "आम तौर पर, आपको अपना शरीर कितना मज़बूत और गठा हुआ लगता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: pravara, icon: sara-high, label: {en: "Strong, I rarely fall ill", hi: "मज़बूत, मैं कम ही बीमार पड़ता हूँ"}}
+      - {value: madhyama, icon: sara-mid, label: {en: "Average", hi: "ठीक-ठाक"}}
+      - {value: avara, icon: sara-low, label: {en: "Weak, I fall ill often", hi: "कमज़ोर, मैं जल्दी बीमार पड़ता हूँ"}}
+      - {value: unassessed, icon: unsure, label: {en: "I cannot say", hi: "बता नहीं सकता"}}
+
+# ------------------------------------------------------------------ 4. Samhanana
+- id: ayush.samhanana
+  slot: ayush.samhanana
+  section: ayush
+  mode: ayush
+  priority: 81
+  required: false
+  cost_s: 9
+  self_report_proxy: true
+  prompt:
+    en: "How would you describe your body build?"
+    hi: "आप अपने शरीर की बनावट कैसी बताएँगे?"
+  answer:
+    type: single_choice
+    options:
+      - {value: compact_strong, icon: build-compact, label: {en: "Compact and firm", hi: "गठा हुआ और कसा हुआ"}}
+      - {value: moderate, icon: build-moderate, label: {en: "Medium", hi: "मध्यम"}}
+      - {value: loose_weak, icon: build-loose, label: {en: "Loose or slack", hi: "ढीला"}}
+      - {value: unassessed, icon: unsure, label: {en: "I cannot say", hi: "बता नहीं सकता"}}
+
+# ------------------------------------------------------------------ 5. Pramana
+- id: ayush.pramana
+  slot: ayush.pramana
+  section: ayush
+  mode: ayush
+  priority: 82
+  required: false
+  cost_s: 9
+  self_report_proxy: true
+  prompt:
+    en: "Compared with others of your age and height, what is your body size?"
+    hi: "अपनी उम्र और क़द के दूसरे लोगों के मुक़ाबले, आपका शरीर कैसा है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: proportionate, icon: size-proportionate, label: {en: "About the same", hi: "लगभग बराबर"}}
+      - {value: above_proportion, icon: size-above, label: {en: "Larger", hi: "ज़्यादा भारी"}}
+      - {value: below_proportion, icon: size-below, label: {en: "Smaller", hi: "ज़्यादा दुबला"}}
+      - {value: unassessed, icon: unsure, label: {en: "I cannot say", hi: "बता नहीं सकता"}}
+
+# ------------------------------------------------------------------ 6. Satmya
+- id: ayush.satmya
+  slot: ayush.satmya
+  section: ayush
+  mode: ayush
+  priority: 83
+  required: false
+  cost_s: 11
+  prompt:
+    en: "When the weather changes, or your food or routine changes, how do you cope?"
+    hi: "जब मौसम बदलता है, या खाना-पीना और दिनचर्या बदलती है, तो आप कैसे झेलते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: adapts_easily, icon: satmya-easy, label: {en: "It does not bother me", hi: "मुझे कोई फ़र्क़ नहीं पड़ता"}}
+      - {value: adapts_moderately, icon: satmya-mid, label: {en: "It bothers me a little", hi: "थोड़ा असर पड़ता है"}}
+      - {value: adapts_poorly, icon: satmya-poor, label: {en: "I fall ill whenever things change", hi: "बदलाव होते ही मैं बीमार पड़ जाता हूँ"}}
+      - {value: unassessed, icon: unsure, label: {en: "I cannot say", hi: "बता नहीं सकता"}}
+
+# ------------------------------------------------------------------ 7. Sattva
+- id: ayush.sattva
+  slot: ayush.sattva
+  section: ayush
+  mode: ayush
+  priority: 84
+  required: false
+  cost_s: 11
+  # Sattva is mental strength / endurance under difficulty. Asked concretely, because
+  # an abstract question about "mental strength" gets a socially desirable answer.
+  prompt:
+    en: "When something difficult or painful happens, how do you usually hold up?"
+    hi: "जब कोई मुश्किल या तकलीफ़ आती है, तो आप आम तौर पर कैसे संभलते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: pravara, icon: sattva-high, label: {en: "I stay steady and carry on", hi: "मैं शांत रहकर काम चलाता रहता हूँ"}}
+      - {value: madhyama, icon: sattva-mid, label: {en: "I manage, with some effort", hi: "थोड़ी मेहनत से संभल जाता हूँ"}}
+      - {value: avara, icon: sattva-low, label: {en: "I get shaken easily", hi: "मैं जल्दी घबरा जाता हूँ"}}
+      - {value: unassessed, icon: unsure, label: {en: "I cannot say", hi: "बता नहीं सकता"}}
+
+# ------------------------------------------------------------------ 8. Ahara Shakti
+- id: ayush.ahara_shakti
+  slot: ayush.ahara_shakti
+  section: ayush
+  mode: ayush
+  priority: 40
+  required: true
+  cost_s: 12
+  # Required. Ahara shakti has two limbs — abhyavaharana shakti (how much can be
+  # taken in) and jarana shakti (how well it is digested) — and the pair is the
+  # single most clinically load-bearing item in the block. It is not displaced.
+  prompt:
+    en: "How much can you eat, and how well does it digest?"
+    hi: "आप कितना खा पाते हैं, और वह कितना अच्छा पचता है?"
+  help:
+    en: "Two things: the amount you can comfortably eat, and whether it sits well afterwards."
+    hi: "दो बातें: आप आराम से कितना खा सकते हैं, और खाने के बाद वह ठीक से पचता है या नहीं।"
+  answer:
+    type: single_choice
+    options:
+      - {value: good_intake_good_digestion, icon: agni-good-good,
+         label: {en: "I eat a full meal and it digests well", hi: "मैं भरपेट खाता हूँ और वह अच्छे से पचता है"}}
+      - {value: good_intake_poor_digestion, icon: agni-good-poor,
+         label: {en: "I eat well but feel heavy or bloated after", hi: "मैं अच्छा खाता हूँ पर बाद में भारीपन या गैस रहती है"}}
+      - {value: poor_intake_good_digestion, icon: agni-poor-good,
+         label: {en: "I eat little, but what I eat digests fine", hi: "मैं कम खाता हूँ, पर जो खाता हूँ वह पच जाता है"}}
+      - {value: poor_intake_poor_digestion, icon: agni-poor-poor,
+         label: {en: "I eat little and it still does not digest", hi: "मैं कम खाता हूँ और वह भी नहीं पचता"}}
+
+# ------------------------------------------------------------------ 9. Vyayama Shakti
+- id: ayush.vyayama_shakti
+  slot: ayush.vyayama_shakti
+  section: ayush
+  mode: ayush
+  priority: 46
+  required: false
+  cost_s: 11
+  prompt:
+    en: "How much physical work can you do before you have to stop?"
+    hi: "आप रुकने से पहले कितना शारीरिक काम कर लेते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: high, icon: exert-high, label: {en: "A lot, I do not tire easily", hi: "बहुत, मैं जल्दी नहीं थकता"}}
+      - {value: moderate, icon: exert-mid, label: {en: "A normal amount", hi: "सामान्य"}}
+      - {value: low, icon: exert-low, label: {en: "I tire quickly", hi: "मैं जल्दी थक जाता हूँ"}}
+      - {value: cannot_exert, icon: exert-none, label: {en: "I cannot do physical work at all", hi: "मैं शारीरिक काम कर ही नहीं पाता"}}
+
+# ------------------------------------------------------------------ 10. Vaya
+- id: ayush.vaya
+  slot: ayush.vaya
+  section: ayush
+  mode: ayush
+  priority: 85
+  required: true
+  cost_s: 0
+  # Vaya is derived from identity.age_band, never asked. Bala under 16, Madhya to 60,
+  # Vriddha above — the classical division, mapped onto the age bands we already have.
+  # cost_s is 0 because it costs the patient nothing; it is filled by the engine.
+  derived:
+    from: identity.age_band
+    map:
+      under_18: bala
+      "18_39": madhya
+      "40_59": madhya
+      "60_74": vriddha
+      75_plus: vriddha
+  prompt:
+    en: "(derived from age)"
+    hi: "(उम्र से निकाला गया)"
+  answer:
+    type: single_choice
+    options:
+      - {value: bala, icon: vaya-bala, label: {en: "Bala (childhood)", hi: "बाल"}}
+      - {value: madhya, icon: vaya-madhya, label: {en: "Madhya (middle)", hi: "मध्य"}}
+      - {value: vriddha, icon: vaya-vriddha, label: {en: "Vriddha (old age)", hi: "वृद्ध"}}
+
+# ------------------------------- Agni and Koshtha ---------------------------------
+# Not part of the ten, but named in the brief's own list of what Ayurvedic history
+# taking requires (section 1.1: "Agni (digestive capacity), Koshtha (bowel nature)").
+
+- id: ayush.agni
+  slot: ayush.agni
+  section: ayush
+  mode: ayush
+  priority: 41
+  required: false
+  cost_s: 12
+  prompt:
+    en: "How is your hunger, day to day?"
+    hi: "आपकी भूख रोज़ कैसी रहती है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: sama, icon: agni-sama, label: {en: "Steady — I get hungry at the usual times", hi: "एक जैसी — समय पर भूख लगती है"}}
+      - {value: vishama, icon: agni-vishama, label: {en: "Irregular — sometimes strong, sometimes none", hi: "अनियमित — कभी तेज़, कभी बिल्कुल नहीं"}}
+      - {value: tikshna, icon: agni-tikshna, label: {en: "Very strong — I feel hungry again soon after eating", hi: "बहुत तेज़ — खाने के थोड़ी देर बाद फिर भूख लगती है"}}
+      - {value: manda, icon: agni-manda, label: {en: "Weak — I rarely feel hungry", hi: "मंद — मुझे कम ही भूख लगती है"}}
+
+- id: ayush.koshtha
+  slot: ayush.koshtha
+  section: ayush
+  mode: ayush
+  priority: 45
+  required: false
+  cost_s: 11
+  # No patient should be asked about their bowels twice in four minutes. Koshtha is
+  # derived from personal.bowel where the mapping is unambiguous; "alternating" has no
+  # clean classical equivalent, so it is deliberately absent from the map and the
+  # question gets asked instead.
+  derived:
+    from: personal.bowel
+    map:
+      regular: madhya
+      constipated: krura
+      loose: mridu
+  prompt:
+    en: "Do your bowels move easily, or do you need something to help?"
+    hi: "आपका पेट आसानी से साफ़ होता है, या कुछ लेना पड़ता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: mridu, icon: koshtha-soft, label: {en: "Easily, sometimes more than once a day", hi: "आसानी से, कभी-कभी दिन में एक से ज़्यादा बार"}}
+      - {value: madhya, icon: koshtha-mid, label: {en: "Normally, once a day", hi: "सामान्य, दिन में एक बार"}}
+      - {value: krura, icon: koshtha-hard, label: {en: "With difficulty, I often need something", hi: "मुश्किल से, अक्सर कुछ लेना पड़ता है"}}

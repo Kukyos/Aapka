@@ -1,0 +1,189 @@
+# Review of systems, then documents.
+#
+# ROS sits at priority 130+, BEHIND the AYUSH block. That ordering is decision D3
+# expressed as data: when the four-minute budget runs out, the general sweep is what
+# gets displaced, not the Dashavidha assessment. Change these numbers and you have
+# changed the product's position, so change them deliberately.
+#
+# Each ROS node also skips the body region the chief complaint already covered in
+# detail — asking "any chest pain?" of someone who came in with chest pain wastes
+# eight seconds and makes the machine look like it was not listening.
+
+- id: ros.danger_signs
+  slot: ros.danger_signs
+  section: ros
+  mode: core
+  priority: 25
+  required: true
+  cost_s: 16
+  # Required and asked early, right after the SOCRATES core. This is the node the
+  # red-flag rules depend on — see the slot comment in slots.yaml. It is never
+  # displaced by the budget, in any mode, for any complaint.
+  prompt:
+    en: "Have you had any of these, even once?"
+    hi: "क्या आपको इनमें से कुछ हुआ है, एक बार भी?"
+  help:
+    en: "These are things we need to know about straight away. Choose any that apply, or None of these."
+    hi: "ये बातें हमें तुरंत जाननी होती हैं। जो लागू हों वे चुनिए, या 'इनमें से कोई नहीं' चुनिए।"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: weakness_limb, icon: ros-limb-weakness, label: {en: "Sudden weakness in an arm or leg", hi: "हाथ या पैर में अचानक कमज़ोरी"}, synonyms: ["haath pair kaam nahi", "lakwa", "hath sun", "pair sun"]}
+      - {value: vision_change, icon: ros-vision, label: {en: "Sudden change in eyesight", hi: "नज़र में अचानक बदलाव"}}
+      - {value: fits, icon: cond-epilepsy, label: {en: "Fits", hi: "दौरे"}, synonyms: ["daure", "daura", "mirgi", "jhatke"]}
+      - {value: fainting, icon: ros-fainting, label: {en: "Fainting", hi: "बेहोशी"}, synonyms: ["behosh", "behoshi", "gir gaya", "chakkar aakar gira"]}
+      - {value: blood_in_sputum, icon: ros-blood-sputum, label: {en: "Blood when coughing", hi: "खाँसी में ख़ून"}, synonyms: ["khansi mein khoon", "balgam mein khoon", "khoon ki khansi"]}
+      - {value: blood_in_stool, icon: ros-blood-stool, label: {en: "Blood in stool", hi: "शौच में ख़ून"}, synonyms: ["shauch mein khoon", "tatti mein khoon", "khoon aa raha"]}
+      - {value: black_stool, icon: ros-black-stool, label: {en: "Black stool", hi: "काला शौच"}, synonyms: ["kala shauch", "kali tatti", "kala motion"]}
+      - {value: blood_in_urine, icon: uro-blood, label: {en: "Blood in urine", hi: "पेशाब में ख़ून"}, synonyms: ["peshab mein khoon", "laal peshab"]}
+      - {value: retention, icon: uro-retention, label: {en: "Not able to pass urine", hi: "पेशाब न आना"}, synonyms: ["peshab nahi aa raha", "peshab ruk gaya"]}
+      - {value: jaundice, icon: cond-liver, label: {en: "Yellow eyes or skin", hi: "आँखों या त्वचा का पीलापन"}, synonyms: ["piliya", "peelia", "aankh peeli", "peela pan"]}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: ros.general
+  slot: ros.general
+  section: ros
+  mode: core
+  priority: 180
+  required: false
+  cost_s: 12
+  prompt:
+    en: "Apart from all that, have you noticed any of these?"
+    hi: "इसके अलावा, क्या आपने इनमें से कुछ महसूस किया है?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: weight_loss, icon: assoc-weight-loss, label: {en: "Losing weight without trying", hi: "बिना कोशिश के वज़न घटना"}, synonyms: ["wajan kam", "vajan ghat", "dubla ho raha"]}
+      - {value: weight_gain, icon: ros-weight-gain, label: {en: "Gaining weight", hi: "वज़न बढ़ना"}}
+      - {value: fever, icon: symptom-fever, label: {en: "Fever", hi: "बुख़ार"}, synonyms: ["bukhar", "bukar", "taap", "jvar"]}
+      - {value: night_sweats, icon: ros-night-sweats, label: {en: "Sweating at night", hi: "रात में पसीना"}}
+      - {value: fatigue, icon: symptom-weak, label: {en: "Feeling very tired", hi: "बहुत थकान"}}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: ros.cardioresp
+  slot: ros.cardioresp
+  section: ros
+  mode: core
+  priority: 181
+  required: false
+  cost_s: 12
+  ask_if:
+    not:
+      all:
+        - {slot: cc.primary, in: [chest_pain, breathlessness, cough]}
+  prompt:
+    en: "Any trouble with your chest, breathing or heart?"
+    hi: "छाती, साँस या दिल से जुड़ी कोई तकलीफ़?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: chest_pain, icon: body-chest, label: {en: "Chest pain", hi: "छाती में दर्द"}, synonyms: ["chaati dard", "chati mein dard", "seene mein dard", "seene me dard", "chest mein dard", "dil mein dard"]}
+      - {value: breathlessness, icon: body-lungs, label: {en: "Getting breathless", hi: "साँस फूलना"}, synonyms: ["saans phool", "saans fool", "saans lene mein takleef", "dam ghutna", "saans nahi aa rahi"]}
+      - {value: palpitations, icon: assoc-palpitations, label: {en: "Heart racing", hi: "दिल तेज़ धड़कना"}, synonyms: ["dil tez", "dhadkan tez", "dhadkan badhna"]}
+      - {value: cough, icon: symptom-cough, label: {en: "Cough", hi: "खाँसी"}, synonyms: ["khansi", "khaansi", "kaas"]}
+      - {value: blood_in_sputum, icon: ros-blood-sputum, label: {en: "Blood when coughing", hi: "खाँसी में ख़ून"}, synonyms: ["khansi mein khoon", "balgam mein khoon", "khoon ki khansi"]}
+      - {value: ankle_swelling, icon: ros-ankle-swelling, label: {en: "Swollen feet or ankles", hi: "पैरों या टख़नों में सूजन"}}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: ros.gi
+  slot: ros.gi
+  section: ros
+  mode: core
+  priority: 182
+  required: false
+  cost_s: 12
+  ask_if:
+    not:
+      all:
+        - {slot: cc.primary, in: [abdominal_pain, digestive_problem]}
+  prompt:
+    en: "Any trouble with your stomach or digestion?"
+    hi: "पेट या पाचन से जुड़ी कोई तकलीफ़?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: abdominal_pain, icon: body-abdomen, label: {en: "Stomach pain", hi: "पेट में दर्द"}, synonyms: ["pet dard", "pet mein dard", "pet me dard", "pait dard", "pet kharab", "udar shool"]}
+      - {value: vomiting, icon: assoc-vomiting, label: {en: "Vomiting", hi: "उल्टी"}, synonyms: ["ulti", "ulty", "vaman", "ulti hui"]}
+      - {value: blood_in_stool, icon: ros-blood-stool, label: {en: "Blood in stool", hi: "शौच में ख़ून"}, synonyms: ["shauch mein khoon", "tatti mein khoon", "khoon aa raha"]}
+      - {value: black_stool, icon: ros-black-stool, label: {en: "Black stool", hi: "काला शौच"}, synonyms: ["kala shauch", "kali tatti", "kala motion"]}
+      - {value: jaundice, icon: cond-liver, label: {en: "Yellow eyes or skin", hi: "आँखों या त्वचा का पीलापन"}, synonyms: ["piliya", "peelia", "aankh peeli", "peela pan"]}
+      - {value: difficulty_swallowing, icon: ros-swallowing, label: {en: "Trouble swallowing", hi: "निगलने में तकलीफ़"}}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: ros.neuro
+  slot: ros.neuro
+  section: ros
+  mode: core
+  priority: 183
+  required: false
+  cost_s: 12
+  ask_if:
+    not:
+      all:
+        - {slot: cc.primary, eq: headache}
+  prompt:
+    en: "Any trouble with your head, senses or nerves?"
+    hi: "सिर, इंद्रियों या नसों से जुड़ी कोई तकलीफ़?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: headache, icon: body-head, label: {en: "Headache", hi: "सिर दर्द"}, synonyms: ["sar dard", "sir dard", "sar mein dard", "sir me dard", "matha dard"]}
+      - {value: giddiness, icon: assoc-dizzy, label: {en: "Giddiness", hi: "चक्कर"}}
+      - {value: fainting, icon: ros-fainting, label: {en: "Fainting", hi: "बेहोशी"}, synonyms: ["behosh", "behoshi", "gir gaya", "chakkar aakar gira"]}
+      - {value: numbness, icon: char-tingle, label: {en: "Numbness or tingling", hi: "सुन्नपन या झनझनाहट"}}
+      - {value: weakness_limb, icon: ros-limb-weakness, label: {en: "Weakness in an arm or leg", hi: "हाथ या पैर में कमज़ोरी"}, synonyms: ["haath pair kaam nahi", "lakwa", "hath sun", "pair sun"]}
+      - {value: vision_change, icon: ros-vision, label: {en: "Change in eyesight", hi: "नज़र में बदलाव"}}
+      - {value: fits, icon: cond-epilepsy, label: {en: "Fits", hi: "दौरे"}, synonyms: ["daure", "daura", "mirgi", "jhatke"]}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: ros.uro
+  slot: ros.uro
+  section: ros
+  mode: core
+  priority: 184
+  required: false
+  cost_s: 10
+  ask_if:
+    not:
+      all:
+        - {slot: cc.primary, eq: urinary_problem}
+  prompt:
+    en: "Any trouble passing urine?"
+    hi: "पेशाब से जुड़ी कोई तकलीफ़?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: burning_urine, icon: uro-burning, label: {en: "Burning", hi: "जलन"}}
+      - {value: blood_in_urine, icon: uro-blood, label: {en: "Blood in urine", hi: "पेशाब में ख़ून"}, synonyms: ["peshab mein khoon", "laal peshab"]}
+      - {value: frequency, icon: uro-frequency, label: {en: "Going very often", hi: "बार-बार जाना"}}
+      - {value: retention, icon: uro-retention, label: {en: "Not able to pass urine", hi: "पेशाब न आना"}, synonyms: ["peshab nahi aa raha", "peshab ruk gaya"]}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+# ------------------------------------------------------------------ documents
+# Last, and required. The document step is a separate screen in the kiosk flow, but
+# the decision to enter it is a graph node like any other, so an interview that runs
+# out of budget still reaches it.
+- id: docs.has_papers
+  slot: docs.has_papers
+  section: docs
+  mode: core
+  priority: 200
+  required: true
+  cost_s: 8
+  prompt:
+    en: "Do you have any old prescriptions, test reports or hospital papers with you?"
+    hi: "क्या आपके पास कोई पुराना पर्चा, जाँच रिपोर्ट या अस्पताल के काग़ज़ हैं?"
+  help:
+    en: "If you do, you can hold them up to the camera in a moment. Crumpled and handwritten is fine."
+    hi: "अगर हैं, तो आप उन्हें अभी कैमरे के सामने दिखा सकते हैं। मुड़े हुए और हाथ से लिखे काग़ज़ भी चलेंगे।"
+  answer:
+    type: boolean
+    options:
+      - {value: true, icon: doc-papers, label: {en: "Yes, I have papers", hi: "हाँ, मेरे पास काग़ज़ हैं"}}
+      - {value: false, icon: "no", label: {en: "No, I do not", hi: "नहीं, मेरे पास नहीं हैं"}}

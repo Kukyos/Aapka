@@ -1,0 +1,86 @@
+# Identity and respondent. Asked first, cheap, and all required.
+#
+# identity.language and identity.abha_status are collected by the kiosk shell before
+# the interview starts (language selection has to happen before anything can be
+# spoken), so they are not nodes here — the shell writes them into the session.
+
+- id: identity.respondent
+  slot: identity.respondent
+  section: identity
+  mode: core
+  priority: 1
+  required: true
+  cost_s: 6
+  prompt:
+    en: "Who is answering these questions?"
+    hi: "इन सवालों का जवाब कौन दे रहा है?"
+  help:
+    en: "It is fine if you are answering for someone else. Just tell us who you are."
+    hi: "अगर आप किसी और की तरफ़ से जवाब दे रहे हैं तो कोई बात नहीं। बस बता दीजिए आप कौन हैं।"
+  answer:
+    type: single_choice
+    options:
+      - value: self
+        icon: person-self
+        label: {en: "The patient, myself", hi: "मरीज़ ख़ुद"}
+      - value: relative
+        icon: person-family
+        label: {en: "A family member", hi: "परिवार का सदस्य"}
+      - value: attendant
+        icon: person-helper
+        label: {en: "Someone helping them", hi: "साथ आया कोई व्यक्ति"}
+
+- id: identity.age_band
+  slot: identity.age_band
+  section: identity
+  mode: core
+  priority: 2
+  required: true
+  cost_s: 6
+  prompt:
+    en: "How old is the patient?"
+    hi: "मरीज़ की उम्र कितनी है?"
+  answer:
+    type: single_choice
+    options:
+      - value: under_18
+        icon: age-child
+        label: {en: "Under 18", hi: "18 से कम"}
+      - value: "18_39"
+        icon: age-young
+        label: {en: "18 to 39", hi: "18 से 39"}
+      - value: "40_59"
+        icon: age-middle
+        label: {en: "40 to 59", hi: "40 से 59"}
+      - value: "60_74"
+        icon: age-senior
+        label: {en: "60 to 74", hi: "60 से 74"}
+      - value: 75_plus
+        icon: age-elder
+        label: {en: "75 or older", hi: "75 या उससे ज़्यादा"}
+
+- id: identity.sex
+  slot: identity.sex
+  section: identity
+  mode: core
+  priority: 3
+  required: true
+  cost_s: 5
+  prompt:
+    en: "Is the patient male or female?"
+    hi: "मरीज़ पुरुष हैं या महिला?"
+  answer:
+    type: single_choice
+    options:
+      - value: female
+        icon: sex-female
+        label: {en: "Female", hi: "महिला"}
+      - value: male
+        icon: sex-male
+        label: {en: "Male", hi: "पुरुष"}
+      - value: other
+        icon: sex-other
+        label: {en: "Other", hi: "अन्य"}
+      - value: declined
+        icon: skip
+        label: {en: "Prefer not to say", hi: "नहीं बताना चाहते"}

@@ -1,0 +1,373 @@
+# Past history, drugs and allergy, family, personal.
+#
+# These are the sections a rushed consultation drops first, which is exactly why a
+# kiosk should carry them. Kept to single taps — no free text except where a doctor
+# genuinely cannot act without the words (allergy detail, surgery detail).
+
+# ------------------------------------------------------------------ past
+- id: past.conditions
+  slot: past.conditions
+  section: past
+  mode: core
+  # Asked just BEFORE the danger-sign screen. Several red-flag rules read comorbidity
+  # to decide whether a symptom is new or the patient's known baseline, and a rule
+  # cannot do that if it fires before we have asked.
+  priority: 23
+  required: true
+  cost_s: 15
+  # Required: comorbidities change the reading of every other answer, and several
+  # red-flag rules are conditioned on them.
+  prompt:
+    en: "Has a doctor ever told you that you have any of these?"
+    hi: "क्या डॉक्टर ने कभी बताया है कि आपको इनमें से कुछ है?"
+  help:
+    en: "Choose as many as apply. If none, choose None of these."
+    hi: "जितने लागू हों उतने चुनिए। कोई न हो तो 'इनमें से कोई नहीं' चुनिए।"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: diabetes, icon: cond-diabetes, label: {en: "Diabetes (sugar)", hi: "मधुमेह (शुगर)"}, synonyms: ["sugar", "shugar", "madhumeh", "sugar ki bimari"]}
+      - {value: hypertension, icon: cond-bp, label: {en: "High blood pressure", hi: "उच्च रक्तचाप (बी.पी.)"}, synonyms: ["bp", "bee pee", "blood pressure", "high bp", "rakt chap"]}
+      - {value: heart_disease, icon: cond-heart, label: {en: "Heart disease", hi: "दिल की बीमारी"}, synonyms: ["dil ki bimari", "hriday rog", "heart ki problem"]}
+      - {value: asthma, icon: cond-asthma, label: {en: "Asthma", hi: "दमा"}, synonyms: ["dama", "damma", "saans ki bimari"]}
+      - {value: tuberculosis, icon: cond-tb, label: {en: "Tuberculosis (TB)", hi: "टी.बी."}, synonyms: ["tb", "ti bi", "kshay rog"]}
+      - {value: thyroid, icon: cond-thyroid, label: {en: "Thyroid problem", hi: "थायरॉइड"}, synonyms: ["thyroid", "gale ki gilti"]}
+      - {value: kidney_disease, icon: cond-kidney, label: {en: "Kidney disease", hi: "गुर्दे की बीमारी"}}
+      - {value: liver_disease, icon: cond-liver, label: {en: "Liver disease", hi: "जिगर की बीमारी"}}
+      - {value: stroke, icon: cond-stroke, label: {en: "Paralysis or stroke", hi: "लकवा"}, synonyms: ["lakwa", "lakva", "paralysis", "falij"]}
+      - {value: cancer, icon: cond-cancer, label: {en: "Cancer", hi: "कैंसर"}, synonyms: ["cancer", "kainsar", "arbud"]}
+      - {value: epilepsy, icon: cond-epilepsy, label: {en: "Fits", hi: "मिर्गी"}, synonyms: ["mirgi", "daure aate hain"]}
+      - {value: arthritis, icon: cond-arthritis, label: {en: "Arthritis", hi: "गठिया"}, synonyms: ["gathiya", "gathia", "jodon ka dard"]}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+      - {value: unsure, icon: unsure, label: {en: "I do not know", hi: "पता नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+- id: past.surgeries
+  slot: past.surgeries
+  section: past
+  mode: core
+  priority: 102
+  required: false
+  cost_s: 7
+  prompt:
+    en: "Have you ever had an operation?"
+    hi: "क्या आपका कभी ऑपरेशन हुआ है?"
+  answer:
+    type: boolean
+    options:
+      - {value: true, icon: "yes", label: {en: "Yes", hi: "हाँ"}}
+      - {value: false, icon: "no", label: {en: "No", hi: "नहीं"}}
+
+- id: past.surgeries_detail
+  slot: past.surgeries_detail
+  section: past
+  mode: core
+  priority: 103
+  required: false
+  cost_s: 12
+  skippable: true
+  voice_preferred: true
+  ask_if:
+    all:
+      - {slot: past.surgeries, eq: true}
+  prompt:
+    en: "What operation was it, and roughly when?"
+    hi: "कौन सा ऑपरेशन था, और लगभग कब?"
+  answer:
+    type: text
+
+- id: past.hospitalisation
+  slot: past.hospitalisation
+  section: past
+  mode: core
+  priority: 104
+  required: false
+  cost_s: 8
+  prompt:
+    en: "When were you last admitted to a hospital?"
+    hi: "आप आख़िरी बार अस्पताल में कब भर्ती हुए थे?"
+  answer:
+    type: single_choice
+    options:
+      - {value: never, icon: "no", label: {en: "Never", hi: "कभी नहीं"}}
+      - {value: within_year, icon: time-recent, label: {en: "Within the last year", hi: "पिछले एक साल में"}}
+      - {value: one_to_five_years, icon: time-mid, label: {en: "One to five years ago", hi: "एक से पाँच साल पहले"}}
+      - {value: over_five_years, icon: time-old, label: {en: "More than five years ago", hi: "पाँच साल से ज़्यादा पहले"}}
+      - {value: unsure, icon: unsure, label: {en: "I do not remember", hi: "याद नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+# ------------------------------------------------------------------ drugs & allergy
+- id: drugs.taking_now
+  slot: drugs.taking_now
+  section: drugs
+  mode: core
+  priority: 32
+  required: true
+  cost_s: 7
+  prompt:
+    en: "Are you taking any medicine at the moment?"
+    hi: "क्या आप अभी कोई दवा ले रहे हैं?"
+  help:
+    en: "Any medicine at all — from a doctor, from a shop, or something you take at home."
+    hi: "कोई भी दवा — डॉक्टर की दी हुई, दुकान से ली हुई, या घर पर ली जाने वाली।"
+  answer:
+    type: boolean
+    options:
+      - {value: true, icon: "yes", label: {en: "Yes", hi: "हाँ"}}
+      - {value: false, icon: "no", label: {en: "No", hi: "नहीं"}}
+
+- id: drugs.systems
+  slot: drugs.systems
+  section: drugs
+  mode: core
+  priority: 100
+  required: false
+  cost_s: 11
+  ask_if:
+    all:
+      - {slot: drugs.taking_now, eq: true}
+  # Asking which system of medicine is the kind of question an AYUSH OPD needs and a
+  # generic intake form never has. A patient on both allopathic and ayurvedic
+  # medicine is the common case here, not the exception.
+  prompt:
+    en: "What kind of medicine is it?"
+    hi: "किस तरह की दवा है?"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: allopathic, icon: med-allopathic, label: {en: "English medicine", hi: "अंग्रेज़ी दवा"}}
+      - {value: ayurvedic, icon: med-ayurvedic, label: {en: "Ayurvedic", hi: "आयुर्वेदिक"}}
+      - {value: homeopathic, icon: med-homeopathic, label: {en: "Homeopathic", hi: "होम्योपैथिक"}}
+      - {value: siddha, icon: med-siddha, label: {en: "Siddha", hi: "सिद्ध"}}
+      - {value: unani, icon: med-unani, label: {en: "Unani", hi: "यूनानी"}}
+      - {value: self_medication, icon: med-self, label: {en: "Something I take on my own", hi: "अपने आप ली जाने वाली"}}
+      - {value: none, icon: none, label: {en: "None", hi: "कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+- id: drugs.adherence
+  slot: drugs.adherence
+  section: drugs
+  mode: core
+  priority: 101
+  required: false
+  cost_s: 8
+  ask_if:
+    all:
+      - {slot: drugs.taking_now, eq: true}
+  prompt:
+    en: "Are you taking it regularly?"
+    hi: "क्या आप दवा नियमित रूप से ले रहे हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: regular, icon: adhere-good, label: {en: "Yes, every day", hi: "हाँ, रोज़"}}
+      - {value: sometimes_missed, icon: adhere-partial, label: {en: "I miss it sometimes", hi: "कभी-कभी छूट जाती है"}}
+      - {value: stopped, icon: adhere-stopped, label: {en: "I stopped taking it", hi: "मैंने लेना बंद कर दिया"}}
+      - {value: unsure, icon: unsure, label: {en: "I am not sure", hi: "पता नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+- id: drugs.allergy_known
+  slot: drugs.allergy_known
+  section: drugs
+  mode: core
+  priority: 30
+  required: true
+  cost_s: 9
+  # Required, always. A missed drug allergy is the one intake omission that can
+  # directly harm a patient in the room, so it is never displaced by the budget.
+  prompt:
+    en: "Has any medicine or food ever given you a reaction?"
+    hi: "क्या किसी दवा या खाने से आपको कभी कोई प्रतिक्रिया हुई है?"
+  help:
+    en: "Like a rash, swelling, or trouble breathing after taking something."
+    hi: "जैसे कुछ लेने के बाद चकत्ते, सूजन, या साँस लेने में तकलीफ़।"
+  answer:
+    type: single_choice
+    options:
+      - {value: none, icon: "no", label: {en: "No, never", hi: "नहीं, कभी नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+      - {value: drug_allergy, icon: allergy-drug, label: {en: "Yes, from a medicine", hi: "हाँ, दवा से"}}
+      - {value: food_allergy, icon: allergy-food, label: {en: "Yes, from a food", hi: "हाँ, खाने से"}}
+      - {value: both, icon: allergy-both, label: {en: "Yes, from both", hi: "हाँ, दोनों से"}}
+      - {value: unsure, icon: unsure, label: {en: "I do not know", hi: "पता नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+- id: drugs.allergy_detail
+  slot: drugs.allergy_detail
+  section: drugs
+  mode: core
+  priority: 31
+  required: true
+  cost_s: 12
+  voice_preferred: true
+  ask_if:
+    any:
+      - {slot: drugs.allergy_known, eq: drug_allergy}
+      - {slot: drugs.allergy_known, eq: food_allergy}
+      - {slot: drugs.allergy_known, eq: both}
+  prompt:
+    en: "What was it, and what happened?"
+    hi: "वह क्या था, और क्या हुआ था?"
+  answer:
+    type: text
+
+# ------------------------------------------------------------------ family
+- id: family.conditions
+  slot: family.conditions
+  section: family
+  mode: core
+  priority: 160
+  required: false
+  cost_s: 13
+  prompt:
+    en: "Does anyone in your close family have any of these?"
+    hi: "क्या आपके परिवार में किसी को इनमें से कुछ है?"
+  help:
+    en: "Parents, brothers, sisters or children."
+    hi: "माता-पिता, भाई-बहन या बच्चे।"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: diabetes, icon: cond-diabetes, label: {en: "Diabetes (sugar)", hi: "मधुमेह (शुगर)"}, synonyms: ["sugar", "shugar", "madhumeh", "sugar ki bimari"]}
+      - {value: hypertension, icon: cond-bp, label: {en: "High blood pressure", hi: "उच्च रक्तचाप"}, synonyms: ["bp", "bee pee", "blood pressure", "high bp", "rakt chap"]}
+      - {value: heart_disease, icon: cond-heart, label: {en: "Heart disease", hi: "दिल की बीमारी"}, synonyms: ["dil ki bimari", "hriday rog", "heart ki problem"]}
+      - {value: stroke, icon: cond-stroke, label: {en: "Paralysis or stroke", hi: "लकवा"}, synonyms: ["lakwa", "lakva", "paralysis", "falij"]}
+      - {value: cancer, icon: cond-cancer, label: {en: "Cancer", hi: "कैंसर"}, synonyms: ["cancer", "kainsar", "arbud"]}
+      - {value: asthma, icon: cond-asthma, label: {en: "Asthma", hi: "दमा"}, synonyms: ["dama", "damma", "saans ki bimari"]}
+      - {value: tuberculosis, icon: cond-tb, label: {en: "Tuberculosis (TB)", hi: "टी.बी."}, synonyms: ["tb", "ti bi", "kshay rog"]}
+      - {value: mental_illness, icon: cond-mental, label: {en: "Mental illness", hi: "मानसिक बीमारी"}}
+      - {value: none, icon: none, label: {en: "None of these", hi: "इनमें से कोई नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+      - {value: unsure, icon: unsure, label: {en: "I do not know", hi: "पता नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+# ------------------------------------------------------------------ personal
+- id: personal.diet
+  slot: personal.diet
+  section: personal
+  mode: core
+  priority: 143
+  required: false
+  cost_s: 7
+  prompt:
+    en: "What do you normally eat?"
+    hi: "आप आम तौर पर क्या खाते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: vegetarian, icon: diet-veg, label: {en: "Vegetarian", hi: "शाकाहारी"}}
+      - {value: non_vegetarian, icon: diet-nonveg, label: {en: "Non-vegetarian", hi: "मांसाहारी"}}
+      - {value: eggetarian, icon: diet-egg, label: {en: "Vegetarian with eggs", hi: "अंडा खाते हैं"}}
+      - {value: vegan, icon: diet-vegan, label: {en: "No animal products at all", hi: "पूरी तरह शाकाहारी (दूध भी नहीं)"}}
+
+- id: personal.tobacco
+  slot: personal.tobacco
+  section: personal
+  mode: core
+  priority: 141
+  required: false
+  cost_s: 8
+  prompt:
+    en: "Do you use tobacco in any form?"
+    hi: "क्या आप किसी भी रूप में तंबाकू लेते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: never, icon: "no", label: {en: "Never", hi: "कभी नहीं"}}
+      - {value: chewing, icon: tobacco-chew, label: {en: "Chewing tobacco, gutkha", hi: "खैनी, गुटखा"}}
+      - {value: smoking, icon: tobacco-smoke, label: {en: "Smoking", hi: "धूम्रपान"}}
+      - {value: both, icon: tobacco-both, label: {en: "Both", hi: "दोनों"}}
+      - {value: quit, icon: tobacco-quit, label: {en: "I used to, but stopped", hi: "पहले लेते थे, अब छोड़ दिया"}}
+
+- id: personal.alcohol
+  slot: personal.alcohol
+  section: personal
+  mode: core
+  priority: 142
+  required: false
+  cost_s: 7
+  prompt:
+    en: "Do you drink alcohol?"
+    hi: "क्या आप शराब पीते हैं?"
+  answer:
+    type: single_choice
+    options:
+      - {value: never, icon: "no", label: {en: "Never", hi: "कभी नहीं"}}
+      - {value: occasional, icon: alcohol-occasional, label: {en: "Once in a while", hi: "कभी-कभार"}}
+      - {value: regular, icon: alcohol-regular, label: {en: "Regularly", hi: "नियमित रूप से"}}
+      - {value: quit, icon: tobacco-quit, label: {en: "I used to, but stopped", hi: "पहले पीते थे, अब छोड़ दिया"}}
+
+- id: personal.sleep
+  slot: personal.sleep
+  section: personal
+  mode: core
+  priority: 140
+  required: false
+  cost_s: 8
+  prompt:
+    en: "How is your sleep?"
+    hi: "आपकी नींद कैसी है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: good, icon: sleep-good, label: {en: "Good", hi: "अच्छी"}}
+      - {value: difficulty_falling, icon: sleep-onset, label: {en: "Hard to fall asleep", hi: "नींद देर से आती है"}}
+      - {value: waking_often, icon: sleep-broken, label: {en: "I wake up often", hi: "बार-बार नींद खुलती है"}}
+      - {value: too_little, icon: sleep-little, label: {en: "Too little sleep", hi: "बहुत कम नींद"}}
+      - {value: too_much, icon: sleep-much, label: {en: "Too much sleep", hi: "बहुत ज़्यादा नींद"}}
+
+- id: personal.bowel
+  slot: personal.bowel
+  section: personal
+  mode: core
+  priority: 44
+  required: false
+  cost_s: 8
+  prompt:
+    en: "How are your bowel movements?"
+    hi: "आपका शौच कैसा रहता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: regular, icon: bowel-regular, label: {en: "Regular", hi: "नियमित"}}
+      - {value: constipated, icon: assoc-constipation, label: {en: "Constipated", hi: "क़ब्ज़ रहता है"}}
+      - {value: loose, icon: assoc-loose, label: {en: "Loose", hi: "पतला"}}
+      - {value: alternating, icon: bowel-alternating, label: {en: "Sometimes one, sometimes the other", hi: "कभी क़ब्ज़, कभी पतला"}}
+
+- id: personal.occupation_strain
+  slot: personal.occupation_strain
+  section: personal
+  mode: core
+  priority: 144
+  required: false
+  cost_s: 8
+  prompt:
+    en: "What is your work like?"
+    hi: "आपका काम कैसा है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: sedentary, icon: work-sitting, label: {en: "Mostly sitting", hi: "ज़्यादातर बैठकर"}}
+      - {value: standing_long, icon: work-standing, label: {en: "Standing for long hours", hi: "लंबे समय खड़े रहकर"}}
+      - {value: heavy_physical, icon: work-heavy, label: {en: "Heavy physical work", hi: "भारी शारीरिक काम"}}
+      - {value: night_shift, icon: work-night, label: {en: "Night shifts", hi: "रात की पाली"}}
+      - {value: not_working, icon: work-none, label: {en: "Not working at present", hi: "अभी काम नहीं करते"}}
+
+- id: personal.menstrual
+  slot: personal.menstrual
+  section: personal
+  mode: core
+  priority: 145
+  required: false
+  cost_s: 9
+  ask_if:
+    all:
+      - {slot: identity.sex, eq: female}
+      - {slot: identity.age_band, not_in: [under_18]}
+  prompt:
+    en: "How are your periods?"
+    hi: "आपकी माहवारी कैसी रहती है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: regular, icon: mens-regular, label: {en: "Regular", hi: "नियमित"}}
+      - {value: irregular, icon: mens-irregular, label: {en: "Irregular", hi: "अनियमित"}}
+      - {value: painful, icon: mens-painful, label: {en: "Painful", hi: "दर्द भरी"}}
+      - {value: heavy, icon: mens-heavy, label: {en: "Heavy bleeding", hi: "ज़्यादा रक्तस्राव"}}
+      - {value: stopped, icon: mens-stopped, label: {en: "They have stopped", hi: "बंद हो गई है"}}
+      - {value: not_applicable, icon: skip, label: {en: "Prefer not to say", hi: "नहीं बताना चाहते"}}

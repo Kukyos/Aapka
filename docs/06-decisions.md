@@ -11,6 +11,24 @@ Recommended defaults exist so a build session is never blocked — override free
 Ministry of Ayush. Other shortlisted PS for reference: 26003, 26043, 26044, 26188,
 26031, 26067, 26175, 26104.
 
+**2026-09-02 · D1 answered, on measurement.** Interview budget is per mode, not one
+number: **360 s AYUSH, 240 s core, 90 s returning.** D1's original 240 s default was
+measured against the real graph and found to capture only 5 of the 10 Dashavidha
+parameters, which undercuts gate G5. 360 s captures 10 of 10 and 7 of 7 SOCRATES; past
+that the curve is flat and only the terminal count grows. Full curve, throughput
+arithmetic and the returning-patient offset in `12-budget-findings.md`.
+
+**2026-09-02 · D3 answered. AYUSH-first**, as recommended. Expressed in the ontology as
+priority ordering: the Dashavidha block sits ahead of the review-of-systems sweep, so
+when the budget runs out it is the general sweep that gets displaced. Allopathic intake
+ships as core mode.
+
+**2026-09-02 · D7 answered. Stack** as recommended, with two changes forced by the
+"git clone and one command" constraint: **SQLite instead of Postgres** (one line to
+switch back) and **no Docker**. Groq for cloud inference with an Ollama local fallback
+and a deterministic keyword matcher underneath, so the kiosk still completes an intake
+with no network at all.
+
 **2026-08-29 · Product shape.** Self-service pre-consultation intake terminal, not a
 records app. Patient screen + doctor screen + server. See `02-product.md`.
 

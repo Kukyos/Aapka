@@ -1,0 +1,102 @@
+# Chief complaint. The root of the graph — almost every HPI guard reads cc.primary.
+#
+# Two nodes for one thing on purpose. cc.narration keeps the patient's own words
+# verbatim (a doctor wants to see "pet mein jalan" not "burning_abdominal_pain");
+# cc.primary is the coded value the rest of the graph branches on. The narration is
+# never overwritten by a model's interpretation.
+
+- id: cc.primary
+  slot: cc.primary
+  section: cc
+  mode: core
+  priority: 10
+  required: true
+  cost_s: 12
+  prompt:
+    en: "What is troubling you today?"
+    hi: "आज आपको क्या तकलीफ़ है?"
+  help:
+    en: "Tell us the main problem. If there are several, start with the one that bothers you most."
+    hi: "सबसे बड़ी तकलीफ़ बताइए। अगर कई हैं तो जो सबसे ज़्यादा परेशान कर रही है वह पहले बताइए।"
+  answer:
+    type: single_choice
+    options:
+      - value: abdominal_pain
+        synonyms: ["pet dard", "pet mein dard", "pet me dard", "pait dard", "pet kharab", "udar shool", "pet me bahut dard"]
+        icon: body-abdomen
+        label: {en: "Stomach pain", hi: "पेट में दर्द"}
+      - value: chest_pain
+        synonyms: ["chaati dard", "chati mein dard", "seene mein dard", "seene me dard", "chest mein dard", "dil mein dard"]
+        icon: body-chest
+        label: {en: "Chest pain", hi: "छाती में दर्द"}
+      - value: headache
+        synonyms: ["sar dard", "sir dard", "sar mein dard", "sir me dard", "matha dard", "sir mein dard", "sar mein bahut dard", "matha pakadna"]
+        icon: body-head
+        label: {en: "Headache", hi: "सिर दर्द"}
+      - value: joint_pain
+        synonyms: ["jodo mein dard", "jodon mein dard", "ghutne mein dard", "badan dard", "kamar dard", "haath pair dard"]
+        icon: body-joint
+        label: {en: "Joint or body pain", hi: "जोड़ों या बदन में दर्द"}
+      - value: breathlessness
+        synonyms: ["saans phool", "saans fool", "saans lene mein takleef", "dam ghutna", "saans nahi aa rahi"]
+        icon: body-lungs
+        label: {en: "Trouble breathing", hi: "साँस लेने में तकलीफ़"}
+      - value: fever
+        synonyms: ["bukhar", "bukar", "taap", "jvar"]
+        icon: symptom-fever
+        label: {en: "Fever", hi: "बुख़ार"}
+      - value: cough
+        synonyms: ["khansi", "khaansi", "kaas"]
+        icon: symptom-cough
+        label: {en: "Cough", hi: "खाँसी"}
+      - value: skin_problem
+        synonyms: ["khujli", "chakatte", "daane", "charm rog", "twacha"]
+        icon: body-skin
+        label: {en: "Skin problem", hi: "त्वचा की समस्या"}
+      - value: weakness_fatigue
+        synonyms: ["kamzori", "kamjori", "thakan", "thakaan", "dhil"]
+        icon: symptom-weak
+        label: {en: "Weakness or tiredness", hi: "कमज़ोरी या थकान"}
+      - value: digestive_problem
+        synonyms: ["hazma", "pachan", "gas", "apach", "badhazmi", "acidity"]
+        icon: symptom-digestion
+        label: {en: "Digestion problem", hi: "पाचन की समस्या"}
+      - value: urinary_problem
+        synonyms: ["peshab", "peshaab", "mutra", "peshab mein takleef"]
+        icon: body-urinary
+        label: {en: "Urine problem", hi: "पेशाब की समस्या"}
+      - value: menstrual_problem
+        synonyms: ["mahwari", "mahavari", "periods", "masik dharm"]
+        icon: body-menstrual
+        label: {en: "Periods problem", hi: "माहवारी की समस्या"}
+        ask_if:
+          all:
+            - {slot: identity.sex, eq: female}
+      - value: injury
+        synonyms: ["chot", "chot lagi", "ghaav", "zakhm"]
+        icon: symptom-injury
+        label: {en: "Injury", hi: "चोट"}
+      - value: other
+        icon: symptom-other
+        label: {en: "Something else", hi: "कुछ और"}
+
+- id: cc.narration
+  slot: cc.narration
+  section: cc
+  mode: core
+  priority: 11
+  required: false
+  cost_s: 15
+  # Voice-only by design: the touch path here is a Skip tile, because typing a
+  # paragraph on a kiosk keyboard is not something a 62-year-old will do standing up.
+  # Skipping costs nothing — cc.primary already carries the coded complaint.
+  voice_preferred: true
+  skippable: true
+  prompt:
+    en: "In your own words, tell us about it."
+    hi: "अपने शब्दों में बताइए कि तकलीफ़ क्या है।"
+  help:
+    en: "Say as much or as little as you like. You can also skip this."
+    hi: "जितना चाहें उतना बताइए। आप इसे छोड़ भी सकते हैं।"
+  answer:
+    type: text

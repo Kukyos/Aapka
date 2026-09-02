@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* Kiosk shell.
+ *
+ * Every rule here exists because of the user: someone in their sixties, standing,
+ * possibly unable to read, who has never used a machine like this and will use it
+ * once. Nothing below is decoration.
+ */
+
+@theme {
+  --color-ink: #10201c;
+  --color-paper: #f7f4ed;
+  --color-brand: #0f5c4a;
+  --color-brand-soft: #d8ece5;
+  --color-accent: #b4531f;
+  --color-alarm: #a4161a;
+  --color-alarm-soft: #fbe6e6;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: "Noto Sans", "Noto Sans Devanagari", system-ui, -apple-system, sans-serif;
+  /* No text selection, no long-press menus, no callouts. A patient dragging a finger
+     across a kiosk must not summon a copy-paste bubble. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* Touch targets. The brief's audience is elderly and this is a wall-mounted panel:
+   the WCAG 44px floor is not enough, so nothing tappable is under 88px. */
+.tile {
+  min-height: 132px;
+  border-radius: 1.25rem;
+  border: 3px solid transparent;
+  background: #fff;
+  box-shadow: 0 2px 0 rgb(16 32 28 / 0.08);
+  transition: transform 90ms ease, border-color 90ms ease, background 90ms ease;
+}
+.tile:active {
+  /* Immediate physical feedback. On a resistive panel a press with no response reads
+     as "it didn't work" and gets pressed again. */
+  transform: scale(0.97);
+}
+.tile-selected {
+  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+
+.btn {
+  min-height: 88px;
+  border-radius: 999px;
+  font-weight: 700;
+  transition: transform 90ms ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Focus is keyboard-only. A kiosk has no keyboard, but a tester plugging one in
+   should still be able to drive it. */
+:focus-visible {
+  outline: 4px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
+@keyframes tap-hint {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.9; }
+  50% { transform: translateY(-10px) scale(1.04); opacity: 1; }
+}
+.animate-tap-hint {
+  animation: tap-hint 1.8s ease-in-out infinite;
+}
+
+@keyframes listening {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.35); opacity: 0; }
+}
+.animate-listening {
+  animation: listening 1.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tap-hint,
+  .animate-listening {
+    animation: none;
+  }
+}

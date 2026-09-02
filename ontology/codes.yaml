@@ -1,0 +1,144 @@
+# Terminology codes emitted on the output side.
+#
+# Decision D2 in 06-decisions.md: we hand-build the question graph, but the structured
+# output carries NAMASTE + ICD-11 codes. Dual coding is the part a judge from the
+# Ministry can actually check, and India has a live roadmap to dual-code NAMASTE
+# against ICD-11 TM2.
+#
+# ---------------------------------------------------------------------------------
+# EVERY CODE BELOW IS A PLACEHOLDER. NONE OF THEM IS REAL.
+#
+# This is deliberate, and it is the honest position. Three separate attempts to source
+# real codes on 2026-09-02 all failed for the same reason — the code lists are not
+# publicly downloadable:
+#
+#   NAMASTE (NAMC)   namaste.ayush.gov.in publishes the portal, not the code list.
+#                    Published figure: 7,340 Ayush morbidity codes. Requires an account.
+#
+#   ICD-11 TM2       Module 2 (Ayurveda, Siddha, Unani) was added in 2025. The freely
+#                    downloadable Chapter 26 PDF is Module 1 — East Asian medicine.
+#                    Its codes (SA00 Hypochondrium pain disorder, SA01 Jaundice
+#                    disorder, and so on) are real, but they are TCM patterns. Using
+#                    them for an Ayurveda intake would be a factual error, not a
+#                    shortcut, so they are not used here.
+#
+#   ICD-11 MMS       The WHO browser is JavaScript-rendered and the API needs OAuth
+#                    client credentials (free, application-based, not yet obtained).
+#
+# The alternative to placeholders was to write down codes that look plausible. For a
+# submission judged by the ministry that owns the NAMASTE portal, a fabricated code is
+# strictly worse than an empty one. Every consumer of this file — summary.py, fhir.py,
+# the doctor screen — checks `provenance` and renders unsourced codes as pending,
+# never as fact.
+#
+# Tracked as docs/11-deferred.md D-04 and D-05.
+# ---------------------------------------------------------------------------------
+
+version: 1
+
+provenance_levels:
+  sourced: "Verified against a published, citable source. Safe to display as a code."
+  PLACEHOLDER: "Structure only. Never displayed as a code; rendered as 'pending' everywhere."
+
+# How to close this out, so whoever gets portal access knows exactly what to fill in:
+#   1. Log in to namaste.ayush.gov.in, export the NAMC list for Ayurveda.
+#   2. Apply for ICD-11 API credentials at icd.who.int/icdapi (free).
+#   3. For each complaint below, fill `namaste.code`, `icd11_tm2.code` and
+#      `icd11_mms.code`, and change `provenance` to `sourced` with the export date.
+#   4. Run `python -m pytest server/tests/test_codes.py` — it asserts that anything
+#      marked `sourced` actually has a non-empty code, and vice versa.
+
+complaints:
+
+  abdominal_pain:
+    label: {en: "Abdominal pain", hi: "पेट में दर्द"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Abdominal pain", provenance: PLACEHOLDER}
+
+  chest_pain:
+    label: {en: "Chest pain", hi: "छाती में दर्द"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Chest pain", provenance: PLACEHOLDER}
+
+  headache:
+    label: {en: "Headache", hi: "सिर दर्द"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Headache", provenance: PLACEHOLDER}
+
+  joint_pain:
+    label: {en: "Joint pain", hi: "जोड़ों में दर्द"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Pain in joint", provenance: PLACEHOLDER}
+
+  breathlessness:
+    label: {en: "Breathlessness", hi: "साँस लेने में तकलीफ़"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Dyspnoea", provenance: PLACEHOLDER}
+
+  fever:
+    label: {en: "Fever", hi: "बुख़ार"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Fever", provenance: PLACEHOLDER}
+
+  cough:
+    label: {en: "Cough", hi: "खाँसी"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Cough", provenance: PLACEHOLDER}
+
+  skin_problem:
+    label: {en: "Skin problem", hi: "त्वचा की समस्या"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+  weakness_fatigue:
+    label: {en: "Weakness or fatigue", hi: "कमज़ोरी या थकान"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: "Malaise and fatigue", provenance: PLACEHOLDER}
+
+  digestive_problem:
+    label: {en: "Digestive problem", hi: "पाचन की समस्या"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+  urinary_problem:
+    label: {en: "Urinary problem", hi: "पेशाब की समस्या"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+  menstrual_problem:
+    label: {en: "Menstrual problem", hi: "माहवारी की समस्या"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+  injury:
+    label: {en: "Injury", hi: "चोट"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+  other:
+    label: {en: "Other", hi: "अन्य"}
+    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
+    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+
+# Dosha findings from the Prakriti screen. TM2 is where these would be coded, and it
+# is the single strongest dual-coding demonstration available to this project — an
+# Ayurvedic constitutional finding carrying a WHO code. It stays empty until TM2 is
+# obtained (docs/11-deferred.md D-05).
+dosha_findings:
+  vata:  {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}
+  pitta: {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}
+  kapha: {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}

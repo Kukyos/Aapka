@@ -1,0 +1,404 @@
+# Slots — the output schema of an interview.
+#
+# Every field the system can ever fill, and the legal values for each. This file is
+# the contract the NLU is held to: a model may return one of a slot's declared values
+# or `unclear`, and nothing else. That is what makes invented history structurally
+# impossible rather than merely unlikely (docs/09-architecture.md).
+#
+# Section names and their order match the format mandated in 03-requirements.md:
+# chief complaint -> HPI -> past -> drug/allergy -> family -> personal -> ROS
+# -> prior investigations. AYUSH sections follow, then admin.
+
+version: 1
+
+sections:
+  - id: identity
+    label: {en: "Patient", hi: "रोगी"}
+    order: 0
+    in_summary: true
+  - id: cc
+    label: {en: "Chief complaint", hi: "मुख्य शिकायत"}
+    order: 1
+    in_summary: true
+  - id: hpi
+    label: {en: "History of present illness", hi: "वर्तमान बीमारी का इतिहास"}
+    order: 2
+    in_summary: true
+  - id: past
+    label: {en: "Past medical & surgical history", hi: "पिछला चिकित्सा इतिहास"}
+    order: 3
+    in_summary: true
+  - id: drugs
+    label: {en: "Drug & allergy history", hi: "दवा और एलर्जी"}
+    order: 4
+    in_summary: true
+  - id: family
+    label: {en: "Family history", hi: "पारिवारिक इतिहास"}
+    order: 5
+    in_summary: true
+  - id: personal
+    label: {en: "Personal history", hi: "व्यक्तिगत इतिहास"}
+    order: 6
+    in_summary: true
+  - id: ros
+    label: {en: "Review of systems", hi: "प्रणाली समीक्षा"}
+    order: 7
+    in_summary: true
+  - id: ayush
+    label: {en: "Dashavidha Pariksha", hi: "दशविध परीक्षा"}
+    order: 8
+    in_summary: true
+  - id: ahara
+    label: {en: "Ahara-Vihara (diet & lifestyle)", hi: "आहार-विहार"}
+    order: 9
+    in_summary: true
+  - id: docs
+    label: {en: "Prior investigations", hi: "पिछली जाँचें"}
+    order: 10
+    in_summary: true
+
+slots:
+
+  # ---------------------------------------------------------------- identity
+  identity.respondent:
+    section: identity
+    type: single_choice
+    # R1 in 03-requirements.md. "My mother has chest pain" is a different clinical
+    # fact from the patient saying it. Every slot answered after this one inherits
+    # this value, and proxy-sourced fields are marked on the doctor screen.
+    values: [self, relative, attendant]
+  identity.age_band:
+    section: identity
+    type: single_choice
+    values: [under_18, "18_39", "40_59", "60_74", 75_plus]
+  identity.sex:
+    section: identity
+    type: single_choice
+    values: [female, male, other, declined]
+  identity.abha_status:
+    section: identity
+    type: single_choice
+    values: [scanned, none, declined]
+  identity.language:
+    section: identity
+    type: single_choice
+    values: [en, hi]
+
+  # ---------------------------------------------------------------- chief complaint
+  cc.primary:
+    section: cc
+    type: single_choice
+    values:
+      - abdominal_pain
+      - chest_pain
+      - headache
+      - joint_pain
+      - breathlessness
+      - fever
+      - cough
+      - skin_problem
+      - weakness_fatigue
+      - digestive_problem
+      - urinary_problem
+      - menstrual_problem
+      - injury
+      - other
+  cc.narration:
+    section: cc
+    type: text
+    # Stored verbatim, in the patient's own words and language. Never overwritten by
+    # a model's interpretation — the structured slots carry the interpretation.
+
+  # ---------------------------------------------------------------- HPI (SOCRATES)
+  # The brief names SOCRATES explicitly. All nine dimensions are slots so that
+  # coverage is countable: "9 of 9 captured" is a measurement, not a claim.
+  hpi.site:
+    section: hpi
+    type: single_choice
+    socrates: S
+    values: [upper_abdomen, lower_abdomen, whole_abdomen, central_chest, left_chest,
+             right_chest, forehead, back_of_head, one_side_head, whole_head,
+             knee, shoulder, lower_back, neck, hip, multiple_joints, other_site]
+  hpi.onset:
+    section: hpi
+    type: single_choice
+    socrates: O
+    values: [sudden, gradual, unsure]
+  hpi.duration:
+    section: hpi
+    type: duration
+    socrates: O
+    units: [hours, days, weeks, months, years]
+  hpi.character:
+    section: hpi
+    type: single_choice
+    socrates: C
+    values: [burning, dull_ache, sharp_stabbing, cramping, throbbing, pressure_heavy,
+             tingling, other_character]
+  hpi.radiation:
+    section: hpi
+    type: single_choice
+    socrates: R
+    values: [none, to_back, to_left_arm, to_jaw, to_shoulder, to_groin, to_leg, elsewhere]
+  hpi.associated:
+    section: hpi
+    type: multi_choice
+    socrates: A
+    values: [nausea, vomiting, fever, sweating, dizziness, breathlessness, palpitations,
+             loose_motion, constipation, weight_loss, appetite_loss, none]
+  hpi.timing:
+    section: hpi
+    type: single_choice
+    socrates: T
+    values: [constant, comes_and_goes, worse_morning, worse_night, worse_after_food,
+             worse_empty_stomach, unrelated]
+  hpi.aggravating:
+    section: hpi
+    type: multi_choice
+    socrates: E
+    values: [eating, empty_stomach, movement, rest, lying_down, stress, cold, heat,
+             certain_foods, nothing_particular]
+  hpi.relieving:
+    section: hpi
+    type: multi_choice
+    socrates: E
+    values: [medicine, food, rest, vomiting, passing_stool, warmth, nothing_helps]
+  hpi.severity:
+    section: hpi
+    type: scale
+    socrates: S
+    min: 0
+    max: 10
+  hpi.progression:
+    section: hpi
+    type: single_choice
+    values: [getting_worse, getting_better, same, fluctuating]
+  hpi.first_episode:
+    section: hpi
+    type: boolean
+
+  # ---------------------------------------------------------------- past history
+  past.conditions:
+    section: past
+    type: multi_choice
+    values: [diabetes, hypertension, heart_disease, asthma, tuberculosis, thyroid,
+             kidney_disease, liver_disease, stroke, cancer, epilepsy, arthritis,
+             none, unsure]
+  past.surgeries:
+    section: past
+    type: boolean
+  past.surgeries_detail:
+    section: past
+    type: text
+  past.hospitalisation:
+    section: past
+    type: single_choice
+    values: [never, within_year, one_to_five_years, over_five_years, unsure]
+
+  # ---------------------------------------------------------------- drugs & allergy
+  drugs.taking_now:
+    section: drugs
+    type: boolean
+  drugs.systems:
+    section: drugs
+    type: multi_choice
+    # Which system of medicine. Matters in an AYUSH OPD and nobody else asks it.
+    values: [allopathic, ayurvedic, homeopathic, siddha, unani, self_medication, none]
+  drugs.adherence:
+    section: drugs
+    type: single_choice
+    values: [regular, sometimes_missed, stopped, unsure]
+  drugs.allergy_known:
+    section: drugs
+    type: single_choice
+    values: [none, drug_allergy, food_allergy, both, unsure]
+  drugs.allergy_detail:
+    section: drugs
+    type: text
+
+  # ---------------------------------------------------------------- family
+  family.conditions:
+    section: family
+    type: multi_choice
+    values: [diabetes, hypertension, heart_disease, stroke, cancer, asthma,
+             tuberculosis, mental_illness, none, unsure]
+
+  # ---------------------------------------------------------------- personal
+  personal.diet:
+    section: personal
+    type: single_choice
+    values: [vegetarian, non_vegetarian, eggetarian, vegan]
+  personal.tobacco:
+    section: personal
+    type: single_choice
+    values: [never, chewing, smoking, both, quit]
+  personal.alcohol:
+    section: personal
+    type: single_choice
+    values: [never, occasional, regular, quit]
+  personal.sleep:
+    section: personal
+    type: single_choice
+    values: [good, difficulty_falling, waking_often, too_little, too_much]
+  personal.bowel:
+    section: personal
+    type: single_choice
+    values: [regular, constipated, loose, alternating]
+  personal.occupation_strain:
+    section: personal
+    type: single_choice
+    values: [sedentary, standing_long, heavy_physical, night_shift, not_working]
+  personal.menstrual:
+    section: personal
+    type: single_choice
+    values: [regular, irregular, painful, heavy, stopped, not_applicable]
+
+  # ---------------------------------------------------------------- review of systems
+  ros.danger_signs:
+    section: ros
+    type: multi_choice
+    # The safety net, and the reason gate G4 works inside a four-minute budget.
+    #
+    # Seven of the twenty red-flag rules read the detailed ROS sweeps below, which sit
+    # at the back of the priority queue and are the first thing the budget displaces.
+    # A stroke flag that can only fire in an interview nobody has time for is not a
+    # safety feature. So the danger signs are lifted out into one required node asked
+    # early, and the sweeps stay for completeness.
+    #
+    # This is what triage actually does: a targeted danger-sign screen, not a full
+    # review of systems.
+    values: [weakness_limb, vision_change, fits, fainting, blood_in_sputum,
+             blood_in_stool, black_stool, blood_in_urine, retention, jaundice, none]
+
+  # A sweep for anything the complaint-driven branch missed. Kept to one multi-select
+  # per body region so it costs seconds, not minutes.
+  ros.general:
+    section: ros
+    type: multi_choice
+    values: [weight_loss, weight_gain, fever, night_sweats, fatigue, none]
+  ros.cardioresp:
+    section: ros
+    type: multi_choice
+    values: [chest_pain, breathlessness, palpitations, cough, blood_in_sputum,
+             ankle_swelling, none]
+  ros.gi:
+    section: ros
+    type: multi_choice
+    values: [abdominal_pain, vomiting, blood_in_stool, black_stool, jaundice,
+             difficulty_swallowing, none]
+  ros.neuro:
+    section: ros
+    type: multi_choice
+    values: [headache, giddiness, fainting, numbness, weakness_limb, vision_change,
+             fits, none]
+  ros.uro:
+    section: ros
+    type: multi_choice
+    values: [burning_urine, blood_in_urine, frequency, retention, none]
+
+  # ---------------------------------------------------------------- AYUSH
+  # Dashavidha Pariksha — all ten parameters named in the brief, each its own slot.
+  # The engine can therefore report "10 of 10 captured", which is the single most
+  # checkable AYUSH claim available to us.
+  #
+  # PROVENANCE: the response options below are drawn from classical Dashavidha
+  # Pariksha descriptions, which are public domain. They are NOT the CCRAS
+  # standardized Prakriti Assessment Scale, which is 91 predictors across 30 domains
+  # in 4 traits and is not publicly downloadable. See docs/10-unsourced.md.
+  ayush.prakriti_screen:
+    section: ayush
+    type: multi_choice
+    dashavidha: Prakriti
+    provenance: "PLACEHOLDER — abbreviated screen. Full instrument: CCRAS PAS, 91 predictors / 30 domains. http://ccras.res.in/ccras_pas/"
+    values: [vata_lean_dry_restless, vata_variable_appetite, vata_light_sleep,
+             pitta_sharp_appetite, pitta_warm_intolerant, pitta_irritable,
+             kapha_heavy_build, kapha_slow_digestion, kapha_deep_sleep]
+  ayush.vikriti:
+    section: ayush
+    type: multi_choice
+    dashavidha: Vikriti
+    values: [vata_aggravated, pitta_aggravated, kapha_aggravated, unclear]
+  ayush.sara:
+    section: ayush
+    type: single_choice
+    dashavidha: Sara
+    values: [pravara, madhyama, avara, unassessed]
+  ayush.samhanana:
+    section: ayush
+    type: single_choice
+    dashavidha: Samhanana
+    values: [compact_strong, moderate, loose_weak, unassessed]
+  ayush.pramana:
+    section: ayush
+    type: single_choice
+    dashavidha: Pramana
+    values: [proportionate, above_proportion, below_proportion, unassessed]
+  ayush.satmya:
+    section: ayush
+    type: single_choice
+    dashavidha: Satmya
+    values: [adapts_easily, adapts_moderately, adapts_poorly, unassessed]
+  ayush.sattva:
+    section: ayush
+    type: single_choice
+    dashavidha: Sattva
+    values: [pravara, madhyama, avara, unassessed]
+  ayush.ahara_shakti:
+    section: ayush
+    type: single_choice
+    dashavidha: "Ahara Shakti"
+    # Abhyavaharana shakti (intake capacity) and jarana shakti (digestive capacity).
+    values: [good_intake_good_digestion, good_intake_poor_digestion,
+             poor_intake_good_digestion, poor_intake_poor_digestion]
+  ayush.vyayama_shakti:
+    section: ayush
+    type: single_choice
+    dashavidha: "Vyayama Shakti"
+    values: [high, moderate, low, cannot_exert]
+  ayush.vaya:
+    section: ayush
+    type: single_choice
+    dashavidha: Vaya
+    # Bala / Madhya / Vriddha — derived from identity.age_band, confirmed not asked.
+    values: [bala, madhya, vriddha]
+  ayush.agni:
+    section: ayush
+    type: single_choice
+    values: [sama, vishama, tikshna, manda]
+  ayush.koshtha:
+    section: ayush
+    type: single_choice
+    values: [mridu, madhya, krura]
+
+  # ---------------------------------------------------------------- Ahara-Vihara
+  ahara.meal_regularity:
+    section: ahara
+    type: single_choice
+    values: [regular_times, irregular, skips_meals]
+  ahara.rasa_preference:
+    section: ahara
+    type: multi_choice
+    # The six tastes. Classical, public domain.
+    values: [madhura, amla, lavana, katu, tikta, kashaya]
+  ahara.water_intake:
+    section: ahara
+    type: single_choice
+    values: [low, moderate, high]
+  vihara.activity:
+    section: ahara
+    type: single_choice
+    values: [sedentary, light, moderate, heavy]
+  vihara.sleep_pattern:
+    section: ahara
+    type: single_choice
+    values: [early_to_bed, late_night, day_sleeping, irregular]
+  vihara.stress:
+    section: ahara
+    type: scale
+    min: 0
+    max: 10
+
+  # ---------------------------------------------------------------- documents
+  docs.has_papers:
+    section: docs
+    type: boolean

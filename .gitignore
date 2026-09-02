@@ -3,12 +3,21 @@ CLAUDE.md
 .claude/
 graphify-out/
 
+# secrets
+.env
+
 # python
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-.env
+.pytest_cache/
+
+# runtime data — patient data must never be committed
+server/aapka.db
+server/bundles/
+eval/documents/
+eval/noise/
 
 # node
 node_modules/
@@ -18,3 +27,6 @@ dist/
 # os
 .DS_Store
 Thumbs.db
+
+# build artefacts
+*.tsbuildinfo

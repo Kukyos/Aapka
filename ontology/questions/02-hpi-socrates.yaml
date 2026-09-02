@@ -1,0 +1,320 @@
+# History of present illness — the SOCRATES probe the brief names by name.
+#
+# Site, Onset, Character, Radiation, Associations, Time course, Exacerbating and
+# relieving factors, Severity. Each is a separate slot so coverage is countable:
+# the engine can report "9 of 9 SOCRATES dimensions captured" as a measurement.
+#
+# Site / Character / Radiation are pain-specific and guarded on a pain complaint.
+# Onset, duration, timing, progression and severity apply to any complaint, so they
+# run unguarded. That split is why a cough interview does not ask where the pain
+# radiates to.
+
+# ------------------------------------------------------------------ S — Site
+- id: hpi.site
+  slot: hpi.site
+  section: hpi
+  mode: core
+  priority: 60
+  required: false
+  cost_s: 8
+  ask_if:
+    all:
+      - {slot: cc.primary, in: [abdominal_pain, chest_pain, headache, joint_pain, injury]}
+  prompt:
+    en: "Where exactly is it?"
+    hi: "दर्द ठीक कहाँ है?"
+  help:
+    en: "You can point to the picture on the screen."
+    hi: "आप स्क्रीन पर तस्वीर छूकर भी बता सकते हैं।"
+  answer:
+    type: single_choice
+    options:
+      - {value: upper_abdomen, icon: site-upper-abdomen, label: {en: "Upper stomach", hi: "पेट का ऊपरी हिस्सा"},
+         ask_if: {all: [{slot: cc.primary, in: [abdominal_pain, digestive_problem]}]}}
+      - {value: lower_abdomen, icon: site-lower-abdomen, label: {en: "Lower stomach", hi: "पेट का निचला हिस्सा"},
+         ask_if: {all: [{slot: cc.primary, in: [abdominal_pain, digestive_problem]}]}}
+      - {value: whole_abdomen, icon: site-whole-abdomen, label: {en: "All over the stomach", hi: "पूरे पेट में"},
+         ask_if: {all: [{slot: cc.primary, in: [abdominal_pain, digestive_problem]}]}}
+      - {value: central_chest, icon: site-central-chest, label: {en: "Middle of the chest", hi: "छाती के बीच में"},
+         ask_if: {all: [{slot: cc.primary, eq: chest_pain}]}}
+      - {value: left_chest, icon: site-left-chest, label: {en: "Left side of the chest", hi: "छाती के बाईं ओर"},
+         ask_if: {all: [{slot: cc.primary, eq: chest_pain}]}}
+      - {value: right_chest, icon: site-right-chest, label: {en: "Right side of the chest", hi: "छाती के दाईं ओर"},
+         ask_if: {all: [{slot: cc.primary, eq: chest_pain}]}}
+      - {value: forehead, icon: site-forehead, label: {en: "Forehead", hi: "माथे में"},
+         ask_if: {all: [{slot: cc.primary, eq: headache}]}}
+      - {value: back_of_head, icon: site-back-head, label: {en: "Back of the head", hi: "सिर के पिछले हिस्से में"},
+         ask_if: {all: [{slot: cc.primary, eq: headache}]}}
+      - {value: one_side_head, icon: site-one-side-head, label: {en: "One side of the head", hi: "सिर के एक तरफ़"},
+         ask_if: {all: [{slot: cc.primary, eq: headache}]}}
+      - {value: whole_head, icon: site-whole-head, label: {en: "The whole head", hi: "पूरे सिर में"},
+         ask_if: {all: [{slot: cc.primary, eq: headache}]}}
+      - {value: knee, icon: site-knee, label: {en: "Knee", hi: "घुटने में"},
+         ask_if: {all: [{slot: cc.primary, in: [joint_pain, injury]}]}}
+      - {value: shoulder, icon: site-shoulder, label: {en: "Shoulder", hi: "कंधे में"},
+         ask_if: {all: [{slot: cc.primary, in: [joint_pain, injury]}]}}
+      - {value: lower_back, icon: site-lower-back, label: {en: "Lower back", hi: "कमर में"},
+         ask_if: {all: [{slot: cc.primary, in: [joint_pain, injury]}]}}
+      - {value: neck, icon: site-neck, label: {en: "Neck", hi: "गर्दन में"},
+         ask_if: {all: [{slot: cc.primary, in: [joint_pain, injury]}]}}
+      - {value: hip, icon: site-hip, label: {en: "Hip", hi: "कूल्हे में"},
+         ask_if: {all: [{slot: cc.primary, in: [joint_pain, injury]}]}}
+      - {value: multiple_joints, icon: site-multiple-joints, label: {en: "Many joints", hi: "कई जोड़ों में"},
+         ask_if: {all: [{slot: cc.primary, eq: joint_pain}]}}
+      - {value: other_site, icon: site-other, label: {en: "Somewhere else", hi: "कहीं और"}}
+
+# ------------------------------------------------------------------ O — Onset
+- id: hpi.onset
+  slot: hpi.onset
+  section: hpi
+  mode: core
+  priority: 20
+  required: true
+  cost_s: 7
+  prompt:
+    en: "Did it start suddenly, or slowly over time?"
+    hi: "क्या यह अचानक शुरू हुआ, या धीरे-धीरे?"
+  answer:
+    type: single_choice
+    options:
+      - {value: sudden, icon: onset-sudden, label: {en: "All of a sudden", hi: "अचानक"}, synonyms: ["achanak", "ekdum", "turant", "achaanak"]}
+      - {value: gradual, icon: onset-gradual, label: {en: "Slowly, over time", hi: "धीरे-धीरे"}, synonyms: ["dheere dheere", "dhire dhire", "halka halka", "aahista"]}
+      - {value: unsure, icon: unsure, label: {en: "I am not sure", hi: "पता नहीं"}, synonyms: ["pata nahi", "malum nahi", "yaad nahi", "kya pata"]}
+
+- id: hpi.duration
+  slot: hpi.duration
+  section: hpi
+  mode: core
+  priority: 21
+  required: true
+  cost_s: 9
+  prompt:
+    en: "How long have you had this?"
+    hi: "यह तकलीफ़ कब से है?"
+  help:
+    en: "A rough answer is fine."
+    hi: "अंदाज़ा भी चलेगा।"
+  answer:
+    type: duration
+    units:
+      - {value: hours, label: {en: "hours", hi: "घंटे"}}
+      - {value: days, label: {en: "days", hi: "दिन"}}
+      - {value: weeks, label: {en: "weeks", hi: "हफ़्ते"}}
+      - {value: months, label: {en: "months", hi: "महीने"}}
+      - {value: years, label: {en: "years", hi: "साल"}}
+
+# ------------------------------------------------------------------ C — Character
+- id: hpi.character
+  slot: hpi.character
+  section: hpi
+  mode: core
+  priority: 61
+  required: false
+  cost_s: 9
+  ask_if:
+    all:
+      - {slot: cc.primary, in: [abdominal_pain, chest_pain, headache, joint_pain, injury]}
+  prompt:
+    en: "What does the pain feel like?"
+    hi: "दर्द कैसा महसूस होता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: burning, icon: char-burning, label: {en: "Burning", hi: "जलन जैसा"}, synonyms: ["jalan", "jalan hoti", "jalta hai", "jalan si"]}
+      - {value: dull_ache, icon: char-dull, label: {en: "A dull ache", hi: "हल्का सा दर्द"}, synonyms: ["halka dard", "dheema dard", "halka sa dard"]}
+      - {value: sharp_stabbing, icon: char-sharp, label: {en: "Sharp, like a stab", hi: "तेज़, चुभने जैसा"}, synonyms: ["tez dard", "chubhta", "chubhan", "teekha dard"]}
+      - {value: cramping, icon: char-cramp, label: {en: "Cramping, twisting", hi: "मरोड़ जैसा"}, synonyms: ["maror", "marod", "ainthan", "aanth"]}
+      - {value: throbbing, icon: char-throb, label: {en: "Throbbing", hi: "धड़कने जैसा"}, synonyms: ["dhadakta", "tapakta", "tees"]}
+      - {value: pressure_heavy, icon: char-pressure, label: {en: "Heavy, like pressure", hi: "भारीपन या दबाव जैसा"}, synonyms: ["bhaaripan", "bharipan", "dabav", "bhari lagta"]}
+      - {value: tingling, icon: char-tingle, label: {en: "Tingling", hi: "झनझनाहट"}, synonyms: ["jhunjhuni", "jhanjhanahat", "sunn"]}
+      - {value: other_character, icon: symptom-other, label: {en: "Something else", hi: "कुछ और"}}
+
+# ------------------------------------------------------------------ R — Radiation
+- id: hpi.radiation
+  slot: hpi.radiation
+  section: hpi
+  mode: core
+  priority: 62
+  required: false
+  cost_s: 8
+  ask_if:
+    all:
+      - {slot: cc.primary, in: [abdominal_pain, chest_pain, joint_pain]}
+  prompt:
+    en: "Does the pain travel anywhere else?"
+    hi: "क्या दर्द कहीं और भी जाता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: none, icon: radiate-none, label: {en: "No, it stays in one place", hi: "नहीं, एक ही जगह रहता है"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+      - {value: to_back, icon: radiate-back, label: {en: "To the back", hi: "पीठ की ओर"}}
+      - {value: to_left_arm, icon: radiate-left-arm, label: {en: "To the left arm", hi: "बाएँ हाथ की ओर"},
+         ask_if: {all: [{slot: cc.primary, eq: chest_pain}]}}
+      - {value: to_jaw, icon: radiate-jaw, label: {en: "To the jaw or neck", hi: "जबड़े या गर्दन की ओर"},
+         ask_if: {all: [{slot: cc.primary, eq: chest_pain}]}}
+      - {value: to_shoulder, icon: radiate-shoulder, label: {en: "To the shoulder", hi: "कंधे की ओर"}}
+      - {value: to_groin, icon: radiate-groin, label: {en: "Down towards the groin", hi: "नीचे कमर की ओर"},
+         ask_if: {all: [{slot: cc.primary, eq: abdominal_pain}]}}
+      - {value: to_leg, icon: radiate-leg, label: {en: "Down the leg", hi: "पैर की ओर"}}
+      - {value: elsewhere, icon: symptom-other, label: {en: "Somewhere else", hi: "कहीं और"}}
+
+# ------------------------------------------------------------------ A — Associations
+- id: hpi.associated
+  slot: hpi.associated
+  section: hpi
+  mode: core
+  priority: 22
+  required: true
+  cost_s: 14
+  # Required and unguarded. This node feeds most of the red-flag rules, so it is
+  # asked even when the budget is spent — see redflags.yaml.
+  prompt:
+    en: "Is anything else happening along with it?"
+    hi: "इसके साथ और कुछ भी हो रहा है?"
+  help:
+    en: "You can choose more than one. If nothing else, choose Nothing else."
+    hi: "आप एक से ज़्यादा चुन सकते हैं। और कुछ न हो तो 'और कुछ नहीं' चुनिए।"
+  answer:
+    type: multi_choice
+    exclusive_value: none
+    options:
+      - {value: nausea, icon: assoc-nausea, label: {en: "Feeling sick", hi: "जी मिचलाना"}, synonyms: ["ji michalna", "jee michal", "matli", "ulti jaisa", "man kharab"]}
+      - {value: vomiting, icon: assoc-vomiting, label: {en: "Vomiting", hi: "उल्टी"}, synonyms: ["ulti", "ulty", "vaman", "ulti hui"]}
+      - {value: fever, icon: symptom-fever, label: {en: "Fever", hi: "बुख़ार"}, synonyms: ["bukhar", "bukar", "taap", "jvar"]}
+      - {value: sweating, icon: assoc-sweating, label: {en: "Heavy sweating", hi: "बहुत पसीना"}, synonyms: ["paseena", "pasina", "paseena aana"]}
+      - {value: dizziness, icon: assoc-dizzy, label: {en: "Giddiness", hi: "चक्कर"}, synonyms: ["chakkar", "chakar", "sar ghoomna"]}
+      - {value: breathlessness, icon: body-lungs, label: {en: "Trouble breathing", hi: "साँस फूलना"}, synonyms: ["saans phool", "saans fool", "saans lene mein takleef", "dam ghutna", "saans nahi aa rahi"]}
+      - {value: palpitations, icon: assoc-palpitations, label: {en: "Heart racing", hi: "दिल तेज़ धड़कना"}, synonyms: ["dil tez", "dhadkan tez", "dhadkan badhna"]}
+      - {value: loose_motion, icon: assoc-loose, label: {en: "Loose motions", hi: "दस्त"}, synonyms: ["dast", "dust", "patla motion", "loose motion", "atisar"]}
+      - {value: constipation, icon: assoc-constipation, label: {en: "Constipation", hi: "क़ब्ज़"}, synonyms: ["kabz", "kabj", "kabzi", "pet saaf nahi"]}
+      - {value: weight_loss, icon: assoc-weight-loss, label: {en: "Losing weight", hi: "वज़न घटना"}, synonyms: ["wajan kam", "vajan ghat", "dubla ho raha"]}
+      - {value: appetite_loss, icon: assoc-appetite, label: {en: "No appetite", hi: "भूख न लगना"}, synonyms: ["bhookh nahi", "bhook nahi lagti", "aruchi"]}
+      - {value: none, icon: none, label: {en: "Nothing else", hi: "और कुछ नहीं"}, synonyms: ["kuch nahi", "koi nahi", "kuch bhi nahi", "in mein se koi nahi"]}
+
+# ------------------------------------------------------------------ T — Time course
+- id: hpi.timing
+  slot: hpi.timing
+  section: hpi
+  mode: core
+  priority: 63
+  required: false
+  cost_s: 9
+  prompt:
+    en: "Is it there all the time, or does it come and go?"
+    hi: "क्या यह हमेशा रहता है, या आता-जाता है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: constant, icon: time-constant, label: {en: "All the time", hi: "हमेशा"}}
+      - {value: comes_and_goes, icon: time-intermittent, label: {en: "Comes and goes", hi: "आता-जाता है"}}
+      - {value: worse_morning, icon: time-morning, label: {en: "Worse in the morning", hi: "सुबह ज़्यादा"}}
+      - {value: worse_night, icon: time-night, label: {en: "Worse at night", hi: "रात में ज़्यादा"}}
+      - {value: worse_after_food, icon: time-after-food, label: {en: "Worse after eating", hi: "खाने के बाद ज़्यादा"}}
+      - {value: worse_empty_stomach, icon: time-empty-stomach, label: {en: "Worse on an empty stomach", hi: "खाली पेट ज़्यादा"}}
+      - {value: unrelated, icon: unsure, label: {en: "No particular pattern", hi: "कोई ख़ास बात नहीं"}}
+
+# ------------------------------------------------------------------ E — Exacerbating / relieving
+- id: hpi.aggravating
+  slot: hpi.aggravating
+  section: hpi
+  mode: core
+  priority: 64
+  required: false
+  cost_s: 11
+  prompt:
+    en: "What makes it worse?"
+    hi: "किस चीज़ से यह बढ़ जाता है?"
+  answer:
+    type: multi_choice
+    exclusive_value: nothing_particular
+    options:
+      - {value: eating, icon: agg-eating, label: {en: "Eating", hi: "खाना खाने से"}}
+      - {value: empty_stomach, icon: time-empty-stomach, label: {en: "An empty stomach", hi: "खाली पेट रहने से"}}
+      - {value: movement, icon: agg-movement, label: {en: "Moving about", hi: "चलने-फिरने से"}}
+      - {value: rest, icon: agg-rest, label: {en: "Resting", hi: "आराम करने से"}}
+      - {value: lying_down, icon: agg-lying, label: {en: "Lying down", hi: "लेटने से"}}
+      - {value: stress, icon: agg-stress, label: {en: "Worry or tension", hi: "चिंता या तनाव से"}}
+      - {value: cold, icon: agg-cold, label: {en: "Cold weather", hi: "ठंड से"}}
+      - {value: heat, icon: agg-heat, label: {en: "Heat", hi: "गर्मी से"}}
+      - {value: certain_foods, icon: agg-foods, label: {en: "Certain foods", hi: "कुछ ख़ास खाने से"}}
+      - {value: nothing_particular, icon: unsure, label: {en: "Nothing in particular", hi: "कोई ख़ास चीज़ नहीं"}}
+
+- id: hpi.relieving
+  slot: hpi.relieving
+  section: hpi
+  mode: core
+  priority: 65
+  required: false
+  cost_s: 10
+  prompt:
+    en: "What makes it better?"
+    hi: "किस चीज़ से आराम मिलता है?"
+  answer:
+    type: multi_choice
+    exclusive_value: nothing_helps
+    options:
+      - {value: medicine, icon: rel-medicine, label: {en: "Taking medicine", hi: "दवा लेने से"}}
+      - {value: food, icon: rel-food, label: {en: "Eating something", hi: "कुछ खाने से"}}
+      - {value: rest, icon: agg-rest, label: {en: "Resting", hi: "आराम करने से"}}
+      - {value: vomiting, icon: assoc-vomiting, label: {en: "After vomiting", hi: "उल्टी के बाद"}, synonyms: ["ulti", "ulty", "vaman", "ulti hui"]}
+      - {value: passing_stool, icon: rel-stool, label: {en: "After passing stool", hi: "शौच के बाद"}}
+      - {value: warmth, icon: rel-warmth, label: {en: "Warmth or a hot compress", hi: "सिंकाई या गर्मी से"}}
+      - {value: nothing_helps, icon: unsure, label: {en: "Nothing helps", hi: "किसी चीज़ से नहीं"}}
+
+# ------------------------------------------------------------------ S — Severity
+- id: hpi.severity
+  slot: hpi.severity
+  section: hpi
+  mode: core
+  priority: 23
+  required: true
+  cost_s: 8
+  # Feeds a red-flag rule, so required.
+  prompt:
+    en: "How bad is it right now?"
+    hi: "अभी यह कितना ज़्यादा है?"
+  help:
+    en: "Touch a face. The left is no trouble at all, the right is the worst you can imagine."
+    hi: "एक चेहरा छूइए। बाईं ओर बिल्कुल तकलीफ़ नहीं, दाईं ओर सबसे ज़्यादा तकलीफ़।"
+  answer:
+    type: scale
+    min: 0
+    max: 10
+    anchors:
+      low: {en: "No trouble", hi: "कोई तकलीफ़ नहीं"}
+      high: {en: "Unbearable", hi: "असहनीय"}
+
+# ------------------------------------------------------------------ course
+- id: hpi.progression
+  slot: hpi.progression
+  section: hpi
+  mode: core
+  priority: 66
+  required: false
+  cost_s: 8
+  prompt:
+    en: "Since it started, is it getting worse, getting better, or staying the same?"
+    hi: "शुरू होने के बाद से यह बढ़ रहा है, कम हो रहा है, या वैसा ही है?"
+  answer:
+    type: single_choice
+    options:
+      - {value: getting_worse, icon: prog-worse, label: {en: "Getting worse", hi: "बढ़ रहा है"}}
+      - {value: getting_better, icon: prog-better, label: {en: "Getting better", hi: "कम हो रहा है"}}
+      - {value: same, icon: prog-same, label: {en: "About the same", hi: "वैसा ही है"}}
+      - {value: fluctuating, icon: prog-fluctuating, label: {en: "Up and down", hi: "कभी ज़्यादा कभी कम"}}
+
+- id: hpi.first_episode
+  slot: hpi.first_episode
+  section: hpi
+  mode: core
+  priority: 67
+  required: false
+  cost_s: 7
+  prompt:
+    en: "Is this the first time this has happened?"
+    hi: "क्या यह पहली बार हुआ है?"
+  answer:
+    type: boolean
+    options:
+      - {value: true, icon: "yes", label: {en: "Yes, the first time", hi: "हाँ, पहली बार"}}
+      - {value: false, icon: "no", label: {en: "No, it has happened before", hi: "नहीं, पहले भी हुआ है"}}
