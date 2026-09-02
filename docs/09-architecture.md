@@ -86,11 +86,17 @@ tappable form live in the **same node** and fill the **same slot**.
 | `boolean` | yes / no in either language | two large tiles |
 | `scale` | spoken number 0-10 | a row of tappable faces |
 | `duration` | "three weeks" becomes `{n: 3, unit: weeks}` | number pad + unit tiles |
-| `number` | spoken digits | number pad |
-| `text` | free narration, stored verbatim | on-screen keyboard, last resort |
+| `text` | free narration, stored verbatim | **a Skip tile — see below** |
 
-`text` is deliberately rare. Free text cannot be scored, cannot be coded, and cannot
-be tapped comfortably. It exists for the chief-complaint narration and nothing else.
+Every type in this table has a renderer in `patient/src/QuestionScreen.tsx`. A type
+with no renderer is a blank screen in a waiting hall, so the list is deliberately
+short and adding to it is a load-time error until the kiosk can draw it.
+
+`text` is deliberately rare, and **every `text` node must be `skippable`** — asserted
+by `test_no_free_text_question_is_a_dead_end`. A kiosk has no keyboard, so the only
+touch path for free text is a Skip tile; without it a patient whose speech recognition
+fails cannot get past the question at all. Free text is an addition to a coded slot,
+never the only place a fact lives.
 
 ### Guard grammar
 
@@ -99,7 +105,8 @@ is a condition or a combinator:
 
 ```
 condition   {slot: <id>, <op>: <value>}
-  ops       eq | ne | in | not_in | is_set | not_set | gte | lte | contains
+  ops       eq | ne | in | not_in | is_set | not_set | gte | lte |
+            contains | not_contains
 combinator  {all: [...]} | {any: [...]} | {not: {...}}
 ```
 
@@ -201,10 +208,22 @@ beside it.
 ## Session lifecycle
 
 ```
-create -> consent -> interview -> documents -> review -> submit -> WIPE
-                                                           |
-                                  FHIR bundle -> HIS / ABHA (mock until credentials)
+create -> consent -> identify -> interview -> documents -> read-back -> submit -> WIPE
+                        |                                      |
+             ABHA card or "I have none"        FHIR bundle -> HIS / ABHA
+             (both paths equal, G1)            (mock until credentials)
 ```
+
+**identify** is brief 3.4 Step 1. The card is read with the same OCR ladder the
+document pipeline uses and matched against the 14-digit ABHA pattern; "I do not have
+one" is a recorded answer, not a skipped step, because gate G1 says the primary flow
+must work for a walk-in carrying nothing.
+
+**read-back** is Module C's "patient-facing audio confirmation in local language". The
+terminal speaks back the chief complaint, HPI, past history and drug/allergy sections
+before anything is sent. It is the only point in the whole flow where the patient can
+correct the machine — everything before it is the machine asking, and everything after
+it is a doctor reading.
 
 - Inactivity timeout returns the terminal to the attract loop and discards state (R3).
 - Abandoned sessions are marked `abandoned`, never forwarded to a doctor (R2).

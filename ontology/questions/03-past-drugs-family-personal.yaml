@@ -196,6 +196,11 @@
   required: true
   cost_s: 12
   voice_preferred: true
+  # Skippable even though it is required. Free text has no touch path a standing
+  # patient can use, so without this a failed recogniser is a dead end. The coded
+  # answer in drugs.allergy_known is what the red-flag rules and the summary read;
+  # this field only adds detail.
+  skippable: true
   ask_if:
     any:
       - {slot: drugs.allergy_known, eq: drug_allergy}

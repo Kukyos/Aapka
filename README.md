@@ -69,8 +69,8 @@ Details in [`docs/09-architecture.md`](docs/09-architecture.md).
 |---|---|
 | **A — Conversational history engine** | 59-node ontology, deterministic dialogue engine, 20 red-flag rules, dual input on every question, English + Hindi |
 | **B — Document digitisation** | Vision-LLM OCR with Tesseract fallback, entity extraction, dated timeline, out-of-range flagging, interaction screening |
-| **C — Summary generator** | Templated assembly in the brief's exact section order, editable, accept / amend / reject |
-| **D — Consent, privacy, ABDM** | Audio-explained granular consent, real FHIR R4 bundles, session wipe on submission (asserted by a test) |
+| **C — Summary generator** | Templated assembly in the brief's exact section order, spoken read-back to the patient before submission, editable by the doctor, accept / amend / reject |
+| **D — Consent, privacy, ABDM** | Audio-explained granular consent, ABHA card scan **and** a working no-ABHA path, real FHIR R4 bundles, session wipe on submission (asserted by a test) |
 
 ---
 
@@ -85,7 +85,7 @@ Every number here comes from `server/eval/` and is reproducible with `.\run.ps1 
 | Voice mapped **offline** — no network, no model | **0.85** (11 / 13) |
 | Dashavidha Pariksha captured in a 6-minute AYUSH interview | **10 of 10** |
 | SOCRATES dimensions captured | **7 of 7** |
-| Unit + API tests | **51 passing** |
+| Unit + API tests | **58 passing** |
 
 **Not measured, and not quoted anywhere:** ASR word error rate and OCR accuracy. Those
 need hospital noise recordings and real handwritten prescriptions, and neither exists
@@ -130,10 +130,15 @@ ontology/     the question graph, as data. Edit without a rebuild.
 server/       FastAPI at the edge, pure modules underneath
   aapka/      engine, red flags, NLU, OCR, summary, FHIR, ABDM
   eval/       45 scenarios, runner, scorer, budget sweep
-  tests/      51 tests
+  tests/      58 tests
 patient/      React kiosk
 doctor/       React consultation view
 ```
+
+The kiosk flow is
+`attract -> language -> consent -> identify -> interview -> documents -> read-back -> done`,
+with a red flag cutting straight to the escalation screen from anywhere in the
+interview.
 
 `server/aapka/engine.py` imports no web framework and touches no database. It is a
 pure function of (ontology, session) to next action — which is what makes the eval

@@ -13,6 +13,7 @@ Route groups:
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -139,6 +140,63 @@ def consent(session_id: str, body: ConsentIn) -> dict[str, Any]:
         store.wipe(session_id)
         return {"accepted": False, "wiped": True}
     return {"accepted": True}
+
+
+class AbhaIn(BaseModel):
+    abha_id: str | None = None
+    declined: bool = False
+
+
+ABHA_PATTERN = re.compile('(?<!\\d)(\\d{2}[-\\s]?\\d{4}[-\\s]?\\d{4}[-\\s]?\\d{4})(?!\\d)')
+
+
+@app.post("/api/session/{session_id}/abha")
+def set_abha(session_id: str, body: AbhaIn) -> dict[str, Any]:
+    """Record the patient's health ID, or that they do not have one.
+
+    Both outcomes are first-class. Gate G1 says the primary flow must work for a
+    walk-in carrying nothing, so "no ABHA" is a recorded answer that lets the
+    interview proceed, never a blocked path.
+    """
+    session = _require_session(session_id)
+    if body.declined or not body.abha_id:
+        session.slots["identity.abha_status"] = "none" if body.declined else "declined"
+        store.save(session)
+        return {"ok": True, "abha_status": session.slots["identity.abha_status"]}
+
+    cleaned = re.sub(r"[^0-9]", "", body.abha_id)
+    if len(cleaned) != 14:
+        raise HTTPException(status_code=400, detail="an ABHA number is 14 digits")
+    formatted = f"{cleaned[:2]}-{cleaned[2:6]}-{cleaned[6:10]}-{cleaned[10:]}"
+    store.set_abha(session_id, formatted)
+    session.slots["identity.abha_status"] = "scanned"
+    store.save(session)
+    return {"ok": True, "abha_status": "scanned", "abha_id": formatted}
+
+
+@app.post("/api/session/{session_id}/abha/scan")
+async def scan_abha(session_id: str, file: UploadFile = File(...)) -> dict[str, Any]:
+    """Read an ABHA number off a photographed card.
+
+    Uses the same OCR ladder as the document pipeline, then looks for the 14-digit
+    pattern. A miss is not an error: the kiosk offers the card again or the
+    no-ABHA path, and the interview is identical either way.
+    """
+    _require_session(session_id)
+    image = await file.read()
+    read = ocr.read(image, file.content_type or "image/jpeg")
+    if not read.ok:
+        return {"ok": False, "found": False, "error": read.error}
+    match = ABHA_PATTERN.search(read.text)
+    if not match:
+        return {"ok": True, "found": False, "provider": read.provider}
+    cleaned = re.sub(r"[^0-9]", "", match.group(1))
+    formatted = f"{cleaned[:2]}-{cleaned[2:6]}-{cleaned[6:10]}-{cleaned[10:]}"
+    store.set_abha(session_id, formatted)
+    session = _require_session(session_id)
+    session.slots["identity.abha_status"] = "scanned"
+    store.save(session)
+    return {"ok": True, "found": True, "abha_id": formatted, "provider": read.provider}
 
 
 @app.get("/api/session/{session_id}/next")
@@ -349,9 +407,10 @@ def submit(session_id: str, abha_id: str | None = Body(None, embed=True)) -> dic
     if session.status == "active":
         session.status = "complete"
 
-    bundle = fhir.build_bundle(ont, session, built, timeline, abha_id or store.get_abha(session_id))
+    resolved_abha = abha_id or store.get_abha(session_id)
+    bundle = fhir.build_bundle(ont, session, built, timeline, resolved_abha)
     problems = fhir.validate(bundle)
-    receipt = abdm.push(bundle, session.id, abha_id)
+    receipt = abdm.push(bundle, session.id, resolved_abha)
 
     # The doctor screen reads from the bundle directory, not from the session, which
     # is what lets the session be destroyed a line later.
@@ -449,7 +508,12 @@ def doctor_decision(
     item["decision"] = decision
     if decision == "amend" and amendments:
         item["amendments"] = amendments
-    if decision == "reject":
+
+    # Accept and reject both end the summary's life here. The bundle is already on
+    # disk and the session row is already gone; holding the rendered summary — which
+    # carries the patient's verbatim narration — any longer would quietly undo the
+    # wipe-on-submission guarantee. Amend keeps it so the doctor can keep editing.
+    if decision in {"accept", "reject"}:
         _PENDING.pop(session_id, None)
     return {"ok": True, "decision": decision}
 

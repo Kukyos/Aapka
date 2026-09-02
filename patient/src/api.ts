@@ -94,6 +94,29 @@ export const api = {
 
   next: (id: string) => call<Action>(`/session/${id}/next`),
 
+  // Brief 3.4 Step 1 — Identify. Both paths are first-class: gate G1 says a walk-in
+  // carrying nothing must be able to complete an intake, so declining is an answer.
+  abha: (id: string, body: { abha_id?: string | null; declined?: boolean }) =>
+    call<{ ok: boolean; abha_status: string; abha_id?: string }>(`/session/${id}/abha`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  scanAbha: async (id: string, blob: Blob) => {
+    const form = new FormData();
+    form.append("file", blob, "card.jpg");
+    const response = await fetch(`${BASE}/session/${id}/abha/scan`, {
+      method: "POST",
+      body: form,
+    });
+    return response.json() as Promise<{ ok: boolean; found: boolean; abha_id?: string }>;
+  },
+
+  summary: (id: string) =>
+    call<{ sections: { key: string; title: string; lines: string[] }[] }>(
+      `/session/${id}/summary`,
+    ),
+
   answer: (
     id: string,
     body: {

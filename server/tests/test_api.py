@@ -225,3 +225,135 @@ def test_doctor_can_accept_amend_or_reject(client):
         json={"decision": "accept", "amendments": None},
     ).json()
     assert decided["decision"] == "accept"
+
+
+# --------------------------------------------------------------------- identify
+
+
+def test_no_abha_path_completes_normally(client):
+    """Gate G1 — a walk-in carrying nothing must get an identical interview."""
+    created = client.post("/api/session", json={"language": "hi", "mode": "ayush"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+
+    body = client.post(f"/api/session/{session_id}/abha", json={"declined": True}).json()
+    assert body["abha_status"] == "none"
+
+    action = _drive(client, session_id, ROUTINE)
+    assert action["action"] == "complete"
+    submitted = client.post(f"/api/session/{session_id}/submit", json={"abha_id": None}).json()
+    assert submitted["fhir"]["valid"]
+    assert submitted["abdm"]["abha_linked"] is False
+
+
+def test_abha_is_normalised_and_reaches_the_bundle(client):
+    created = client.post("/api/session", json={"language": "en", "mode": "core"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+
+    body = client.post(f"/api/session/{session_id}/abha",
+                       json={"abha_id": "12 3456 7890 1234"}).json()
+    assert body["abha_id"] == "12-3456-7890-1234"
+
+    _drive(client, session_id, ROUTINE)
+    submitted = client.post(f"/api/session/{session_id}/submit", json={"abha_id": None}).json()
+    assert submitted["abdm"]["abha_linked"] is True
+
+
+def test_a_malformed_abha_is_rejected(client):
+    created = client.post("/api/session", json={"language": "en"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+    assert client.post(f"/api/session/{session_id}/abha",
+                       json={"abha_id": "123"}).status_code == 400
+
+
+# --------------------------------------------------------------------- dead ends
+
+
+def test_no_free_text_question_is_a_dead_end(client, ont=None):
+    """A kiosk has no keyboard. Every free-text node must be escapable by touch, or a
+    patient whose speech recognition fails cannot finish the interview at all."""
+    from aapka.ontology import load
+
+    for node in load().nodes:
+        if node.answer_type == "text":
+            assert node.skippable, (
+                f"{node.id} is free text with no touch escape: a patient whose "
+                "recogniser fails would be stuck on it"
+            )
+
+
+def test_allergy_detail_can_be_skipped_without_speech(client):
+    """The specific case: a patient reports a drug allergy, then cannot dictate the
+    detail. The coded answer is already captured; the detail must not block them."""
+    created = client.post("/api/session", json={"language": "en", "mode": "core"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+    client.post(f"/api/session/{session_id}/abha", json={"declined": True})
+
+    script = {**ROUTINE, "drugs.allergy_known": "drug_allergy"}
+    skipped = []
+    action = client.get(f"/api/session/{session_id}/next").json()
+    for _ in range(80):
+        if action["action"] != "ask":
+            break
+        question = action["question"]
+        if question["slot"] in script:
+            action = client.post(f"/api/session/{session_id}/answer",
+                                 json={"node_id": question["id"],
+                                       "value": script[question["slot"]], "source": "touch"}).json()
+        elif question["skippable"]:
+            skipped.append(question["id"])
+            action = client.post(f"/api/session/{session_id}/skip",
+                                 json={"node_id": question["id"]}).json()
+        else:
+            action = client.post(f"/api/session/{session_id}/answer",
+                                 json={"node_id": question["id"],
+                                       "value": _fallback(question), "source": "touch"}).json()
+    assert "drugs.allergy_detail" in skipped
+    assert action["action"] == "complete"
+
+
+# --------------------------------------------------------------------- read-back
+
+
+def test_review_summary_is_available_before_submitting(client):
+    """Module C's patient-facing audio confirmation reads from this endpoint. It is the
+    only point in the flow where the patient can correct the machine."""
+    created = client.post("/api/session", json={"language": "hi", "mode": "ayush"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+    client.post(f"/api/session/{session_id}/abha", json={"declined": True})
+    _drive(client, session_id, ROUTINE)
+
+    body = client.get(f"/api/session/{session_id}/summary").json()
+    keys = {section["key"] for section in body["sections"]}
+    assert {"cc", "hpi", "drugs"} <= keys
+    # Still live: the read-back happens before anything is sent or wiped.
+    assert client.get(f"/api/session/{session_id}/next").status_code == 200
+
+
+def test_accepted_summary_is_dropped_from_memory(client):
+    """An accepted summary carries the patient's verbatim narration. Holding it after
+    review would quietly undo the wipe-on-submission guarantee."""
+    created = client.post("/api/session", json={"language": "en", "mode": "core"}).json()
+    session_id = created["session_id"]
+    client.post(f"/api/session/{session_id}/consent",
+                json={"capture": True, "share_with_hospital": True})
+    _drive(client, session_id, ROUTINE)
+    client.post(f"/api/session/{session_id}/submit", json={"abha_id": None})
+
+    headers = {"Authorization": f"Bearer {config.DOCTOR_TOKEN}"}
+    client.post(f"/api/doctor/summary/{session_id}/decision",
+                headers=headers, json={"decision": "accept", "amendments": None})
+
+    assert client.get(f"/api/doctor/summary/{session_id}", headers=headers).status_code == 404
+    from aapka.api import _PENDING
+
+    assert session_id not in _PENDING

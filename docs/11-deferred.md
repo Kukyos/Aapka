@@ -86,6 +86,20 @@ formally narrowed to "flag for pharmacist review" rather than "check interaction
 
 ## POLISH — known simplifications
 
+### D-14 · A scanned ABHA number is not verified against ABDM
+The identify step reads the number off the card and normalises it, and it reaches the
+FHIR bundle as the Patient identifier. Nothing confirms the number is real, belongs to
+this patient, or is currently active — that requires an ABDM lookup and therefore
+sandbox credentials.
+**Closes when:** D-03 closes. Until then a mistyped or misread card produces a bundle
+with a wrong identifier, which is why the doctor screen shows the number rather than
+silently trusting it.
+
+### D-15 · No returning-patient prefill from a scanned ABHA
+Scanning a card records the number but does not pull the previous visit. The 90-second
+returning-patient budget therefore has nothing to prefill yet, so the fast path is
+short but not actually faster. Depends on D-03 and is the other half of D-10.
+
 ### D-09 · Interview budget is estimated, not measured
 `cost_s` on each node is an estimate. Once real users run the kiosk, replace the
 estimates with observed per-node timings and the budget arithmetic in `04-targets.md`

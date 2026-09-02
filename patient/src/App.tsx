@@ -1,8 +1,12 @@
 // The kiosk shell and its state machine.
 //
-//   attract -> language -> consent -> interview -> documents -> done
-//                                          |
-//                                          +-> escalate   (red flag; interview over)
+//   attract -> language -> consent -> identify -> interview -> documents -> review -> done
+//                                                      |
+//                                                      +-> escalate  (red flag; over)
+//
+// identify is brief 3.4 Step 1 and has two equal paths — with an ABHA card and
+// without. review is Module C's "patient-facing audio confirmation in local
+// language": the terminal reads back what it understood before anything is sent.
 //
 // Two rules run underneath every screen:
 //
@@ -17,9 +21,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type Action, type Lang, type Question } from "./api";
 import { Icon } from "./Icon";
 import { QuestionScreen } from "./QuestionScreen";
+import { Identify } from "./screens/Identify";
+import { Review } from "./screens/Review";
 import { speak, stopSpeaking, warmVoices } from "./speech";
 
-type Stage = "attract" | "language" | "consent" | "interview" | "documents" | "done" | "escalate";
+type Stage =
+  | "attract"
+  | "language"
+  | "consent"
+  | "identify"
+  | "interview"
+  | "documents"
+  | "review"
+  | "done"
+  | "escalate";
 
 const IDLE_RESET_MS = 90_000;
 
@@ -136,7 +151,19 @@ export default function App() {
         link_to_abha: false,
         audio_played: true,
       });
-      applyAction(await api.next(created.session_id));
+      setStage("identify");
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startInterview = async () => {
+    if (!sessionId) return;
+    setBusy(true);
+    try {
+      applyAction(await api.next(sessionId));
       setStage("interview");
     } catch {
       setError(true);
@@ -196,6 +223,8 @@ export default function App() {
       setBusy(false);
     }
   };
+
+  const finishDocuments = () => setStage("review");
 
   const finish = async () => {
     if (!sessionId) return;
@@ -341,8 +370,18 @@ export default function App() {
     );
   }
 
+  if (stage === "identify") {
+    return <Identify sessionId={sessionId!} lang={lang} onDone={startInterview} />;
+  }
+
   if (stage === "documents") {
-    return <DocumentsScreen sessionId={sessionId!} lang={lang} onFinish={finish} busy={busy} />;
+    return (
+      <DocumentsScreen sessionId={sessionId!} lang={lang} onFinish={finishDocuments} busy={busy} />
+    );
+  }
+
+  if (stage === "review") {
+    return <Review sessionId={sessionId!} lang={lang} onConfirm={() => void finish()} />;
   }
 
   if (stage === "done") {

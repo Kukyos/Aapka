@@ -22,13 +22,15 @@ ONTOLOGY_DIR = ROOT / "ontology"
 
 LANGUAGES = ("en", "hi")
 
+# Every type here must have a renderer in patient/src/QuestionScreen.tsx. A type
+# with no renderer is a blank screen in a waiting hall, so the list is deliberately
+# short: adding one is a load-time error until the kiosk can draw it.
 ANSWER_TYPES = {
     "single_choice",
     "multi_choice",
     "boolean",
     "scale",
     "duration",
-    "number",
     "text",
 }
 
@@ -395,6 +397,9 @@ def _validate(ont: Ontology) -> None:
     # An unreachable required node is a coverage claim we cannot honour.
     filled = {n.slot for n in ont.nodes}
     for slot_id in ont.slots:
+        # These two are set by the kiosk shell rather than by a question node:
+        # language is chosen before anything can be spoken (patient/src/App.tsx), and
+        # abha_status is set by the identify step (POST /session/{id}/abha).
         if slot_id not in filled and slot_id not in {
             "identity.language",
             "identity.abha_status",
