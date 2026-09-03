@@ -57,6 +57,34 @@ sections:
     order: 10
     in_summary: true
 
+# ---------------------------------------------------------------- carry_over
+#
+# `carry_over: true` marks a fact that is still true at the patient's next visit, and
+# is therefore prefilled on a returning-patient interview rather than asked again. It
+# is the mechanism behind the 90-second returning budget in 12-budget-findings.md.
+#
+# Which slots carry is a clinical judgement, which is why it is data and not code:
+#
+#   Carried  — age band, sex, language; past conditions, surgeries and hospitalisations;
+#              drug allergies; family history; diet, tobacco, alcohol and occupational
+#              strain. These change slowly or accumulate, and a patient re-typing their
+#              surgical history every visit is the repeated-questioning problem the
+#              brief names in section 1.1.
+#
+#   Carried  — `ayush.prakriti_screen`, and this one is a point of Ayurvedic doctrine
+#              rather than convenience. Prakriti is constitutional and fixed from birth;
+#              it is not expected to change between visits and re-screening it would be
+#              a category error.
+#
+#   NOT      — `ayush.vikriti` and `ayush.agni`, which are the *current* imbalance and
+#              digestive state and are precisely what this visit is about. The whole
+#              Prakriti/Vikriti distinction is that one is fixed and one is now.
+#
+#   NOT      — every cc.*, hpi.* and ros.* slot, and personal.sleep / personal.bowel.
+#              A returning patient is returning *because something is happening now*.
+#
+# Nothing carried is ever silently trusted: the patient is shown what was remembered and
+# confirms or corrects it before the interview proceeds.
 slots:
 
   # ---------------------------------------------------------------- identity
@@ -68,10 +96,12 @@ slots:
     # this value, and proxy-sourced fields are marked on the doctor screen.
     values: [self, relative, attendant]
   identity.age_band:
+    carry_over: true
     section: identity
     type: single_choice
     values: [under_18, "18_39", "40_59", "60_74", 75_plus]
   identity.sex:
+    carry_over: true
     section: identity
     type: single_choice
     values: [female, male, other, declined]
@@ -80,6 +110,7 @@ slots:
     type: single_choice
     values: [scanned, none, declined]
   identity.language:
+    carry_over: true
     section: identity
     type: single_choice
     values: [en, hi]
@@ -179,18 +210,22 @@ slots:
 
   # ---------------------------------------------------------------- past history
   past.conditions:
+    carry_over: true
     section: past
     type: multi_choice
     values: [diabetes, hypertension, heart_disease, asthma, tuberculosis, thyroid,
              kidney_disease, liver_disease, stroke, cancer, epilepsy, arthritis,
              none, unsure]
   past.surgeries:
+    carry_over: true
     section: past
     type: boolean
   past.surgeries_detail:
+    carry_over: true
     section: past
     type: text
   past.hospitalisation:
+    carry_over: true
     section: past
     type: single_choice
     values: [never, within_year, one_to_five_years, over_five_years, unsure]
@@ -209,15 +244,18 @@ slots:
     type: single_choice
     values: [regular, sometimes_missed, stopped, unsure]
   drugs.allergy_known:
+    carry_over: true
     section: drugs
     type: single_choice
     values: [none, drug_allergy, food_allergy, both, unsure]
   drugs.allergy_detail:
+    carry_over: true
     section: drugs
     type: text
 
   # ---------------------------------------------------------------- family
   family.conditions:
+    carry_over: true
     section: family
     type: multi_choice
     values: [diabetes, hypertension, heart_disease, stroke, cancer, asthma,
@@ -225,14 +263,17 @@ slots:
 
   # ---------------------------------------------------------------- personal
   personal.diet:
+    carry_over: true
     section: personal
     type: single_choice
     values: [vegetarian, non_vegetarian, eggetarian, vegan]
   personal.tobacco:
+    carry_over: true
     section: personal
     type: single_choice
     values: [never, chewing, smoking, both, quit]
   personal.alcohol:
+    carry_over: true
     section: personal
     type: single_choice
     values: [never, occasional, regular, quit]
@@ -245,6 +286,7 @@ slots:
     type: single_choice
     values: [regular, constipated, loose, alternating]
   personal.occupation_strain:
+    carry_over: true
     section: personal
     type: single_choice
     values: [sedentary, standing_long, heavy_physical, night_shift, not_working]
@@ -306,6 +348,7 @@ slots:
   # standardized Prakriti Assessment Scale, which is 91 predictors across 30 domains
   # in 4 traits and is not publicly downloadable. See docs/10-unsourced.md.
   ayush.prakriti_screen:
+    carry_over: true
     section: ayush
     type: multi_choice
     dashavidha: Prakriti

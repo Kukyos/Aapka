@@ -20,6 +20,7 @@ SQLite specifics.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import time
@@ -60,6 +61,28 @@ CREATE TABLE IF NOT EXISTS documents (
     raw_text    TEXT,
     structured  TEXT,
     image       BLOB
+);
+
+-- The returning-patient record. Also survives the wipe, and is the one place in this
+-- system that deliberately outlives a session, so the rules on it are tight:
+--
+--   * Written only when the patient consented to `link_to_abha`. No consent, no row.
+--   * Keyed by a SHA-256 of the ABHA number, never the number. A stolen database does
+--     not yield a list of health IDs, and the only way to read a row is to walk up with
+--     the card that produces the key.
+--   * Holds only slots the ontology marks `carry_over: true` — no complaint, no HPI,
+--     no narration, no documents. What is here is what a patient would otherwise be
+--     made to repeat every single visit, which section 1.1 of the brief names as a
+--     problem in its own right.
+--
+-- This table is a stand-in for ABDM, which is where the record belongs and will live
+-- once D-03 closes. It is labelled `local` in /api/health and on the doctor screen and
+-- is never described as ABDM. See docs/06-decisions.md, 2026-09-03.
+CREATE TABLE IF NOT EXISTS prior_visits (
+    abha_hash   TEXT PRIMARY KEY,
+    visited_at  REAL NOT NULL,
+    language    TEXT,
+    slots       TEXT NOT NULL
 );
 
 -- Survives the wipe. Deliberately carries nothing that identifies a patient: no
@@ -286,6 +309,70 @@ def wipe(session_id: str) -> None:
     with connect() as conn:
         conn.execute("DELETE FROM documents WHERE session_id = ?", (session_id,))
         conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+
+
+# --------------------------------------------------------------------- returning patient
+
+
+def get_consent(session_id: str) -> dict[str, Any] | None:
+    """What this patient actually agreed to. Read before anything is retained."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT consent FROM sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+    if row is None or not row["consent"]:
+        return None
+    return json.loads(row["consent"])
+
+
+def _abha_key(abha_id: str) -> str:
+    """The lookup key for a returning patient.
+
+    A hash, not the number. The row is only reachable by someone holding the card that
+    regenerates the key, and a copy of this database is not a list of health IDs.
+    """
+    return hashlib.sha256(abha_id.strip().replace("-", "").encode("utf-8")).hexdigest()
+
+
+def remember_visit(abha_id: str, session: Session, carry_slots: set[str]) -> None:
+    """Keep the handful of facts that will still be true next time.
+
+    Called at submission, and only for a patient who consented to `link_to_abha`. The
+    session itself is still destroyed — this is a separate, consented record, not a
+    surviving fragment of the interview.
+    """
+    kept = {k: v for k, v in session.slots.items() if k in carry_slots}
+    if not kept:
+        return
+    with connect() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO prior_visits (abha_hash, visited_at, language, slots) "
+            "VALUES (?,?,?,?)",
+            (_abha_key(abha_id), time.time(), session.language,
+             json.dumps(kept, ensure_ascii=False)),
+        )
+
+
+def recall_visit(abha_id: str) -> dict[str, Any] | None:
+    """What we already know about this patient, or None for a first visit."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT visited_at, language, slots FROM prior_visits WHERE abha_hash = ?",
+            (_abha_key(abha_id),),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "visited_at": row["visited_at"],
+        "language": row["language"],
+        "slots": json.loads(row["slots"]),
+    }
+
+
+def forget_visit(abha_id: str) -> None:
+    """Erasure. DPDP 2023 gives the patient this right and it needs a route to reach."""
+    with connect() as conn:
+        conn.execute("DELETE FROM prior_visits WHERE abha_hash = ?", (_abha_key(abha_id),))
 
 
 def expire_stale(timeout_s: int | None = None) -> int:

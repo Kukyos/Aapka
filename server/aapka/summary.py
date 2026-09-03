@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import llm
+from . import config, llm
 from .engine import Session
 from .ontology import Ontology
 
@@ -146,9 +146,66 @@ def term(value: Any) -> str:
     return CLINICAL_TERMS.get(str(value), str(value).replace("_", " "))
 
 
+def describe_slots(ont, slots: dict[str, Any], lang: str = "en") -> list[dict[str, str]]:
+    """Render remembered slot values as text a patient can read or hear.
+
+    Used by the returning-patient screen, where the audience is the patient rather than
+    the physician — so this reads option labels out of the ontology in the patient's own
+    language instead of using the English clinical vocabulary `term()` produces.
+
+    A slot whose value no longer matches any declared option is skipped rather than
+    printed raw. The store holds data written by a previous version of this software,
+    and showing a patient a bare slot id is worse than showing them one fewer line.
+    """
+    lines: list[dict[str, str]] = []
+    for slot_id, value in slots.items():
+        node = next((n for n in ont.nodes if n.slot == slot_id), None)
+        if node is None:
+            continue
+        values = value if isinstance(value, list) else [value]
+        rendered = []
+        for one in values:
+            option = next((o for o in node.options if o.value == one), None)
+            if option is not None:
+                rendered.append(option.label.get(lang) or option.label.get("en") or str(one))
+            elif isinstance(one, (int, float)) or not node.options:
+                rendered.append(term(one))
+        if not rendered:
+            continue
+        lines.append({
+            "slot": slot_id,
+            "label": node.prompt.get(lang) or node.prompt.get("en") or slot_id,
+            "value": ", ".join(rendered),
+        })
+    return lines
+
+
 def _get(session: Session, slot: str) -> Any:
     value = session.slots.get(slot)
     return None if value in (None, [], "") else value
+
+
+def _carried_over(session: Session) -> dict[str, Any] | None:
+    """Which answers came from a previous visit instead of from this interview.
+
+    Returns None when nothing was carried, which is every first visit. The `source` is
+    stated rather than implied — until ABDM credentials exist a carried fact came from
+    this hospital's own terminal and not from the patient's national health record, and
+    a physician reading the summary is entitled to know which.
+    """
+    carried = [a for a in session.answers if a.source == "prefilled"]
+    if not carried:
+        return None
+    return {
+        "count": len(carried),
+        "slots": [a.slot for a in carried],
+        "source": config.PRIOR_VISIT_SOURCE,
+        "note": (
+            f"{len(carried)} of these answers were carried from the patient's previous "
+            "visit and confirmed by them at the terminal, not asked again. Source: "
+            f"{config.PRIOR_VISIT_SOURCE} record."
+        ),
+    }
 
 
 def _proxy_note(session: Session) -> str | None:
@@ -471,6 +528,11 @@ def build(
             "language": session.language,
         },
         "proxy_note": _proxy_note(session),
+        # What was carried over rather than asked at this visit. The physician has to be
+        # able to tell the difference: a fact the patient stated ten minutes ago and a
+        # fact they confirmed from a previous visit are not the same evidence, and the
+        # source is named because ours is not yet the patient's ABHA record (D-03).
+        "carried_over": _carried_over(session),
         "red_flag": session.red_flag,
         "sections": sections,
         "coverage": cov,

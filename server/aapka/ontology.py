@@ -81,6 +81,9 @@ class Slot:
     socrates: str | None = None
     dashavidha: str | None = None
     provenance: str | None = None
+    # Whether this fact survives between visits. Which ones do is a clinical question,
+    # not an engineering one, so it lives in the data — see the note in slots.yaml.
+    carry_over: bool = False
 
 
 @dataclass(frozen=True)
@@ -303,6 +306,7 @@ def _parse_slots(raw: dict) -> dict[str, Slot]:
             socrates=spec.get("socrates"),
             dashavidha=spec.get("dashavidha"),
             provenance=spec.get("provenance"),
+            carry_over=bool(spec.get("carry_over", False)),
         )
     return out
 

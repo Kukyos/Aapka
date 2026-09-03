@@ -29,6 +29,32 @@ switch back) and **no Docker**. Groq for cloud inference with an Ollama local fa
 and a deterministic keyword matcher underneath, so the kiosk still completes an intake
 with no network at all.
 
+**2026-09-03 · Aadhaar. We do not take it.** Brief section 3.4 Step 1 offers three ways
+to identify a patient — ABHA ID, Aadhaar details, or register as new. We implement the
+ABHA path and a first-class "I do not have one" path, and we do not implement Aadhaar
+entry or on-the-spot ABHA creation.
+
+Reasoning, to be stated in the submission rather than left silent: creating an ABHA from
+an Aadhaar number is an ABDM flow that needs sandbox credentials we do not have (D-03),
+so it cannot be built truthfully today either way; handling Aadhaar numbers carries real
+DPDP Act weight for no demonstrable benefit; and collecting the fewest identifiers that
+do the job is a stronger position in front of a judge than collecting more. Gate G1 —
+a walk-in carrying nothing completes an intake — is already satisfied by the decline
+path. Revisit if the sandbox lands early.
+
+**2026-09-03 · Returning-patient fast path ships with a local source.** The prefill
+mechanism is real; the source of the previous visit is our own store rather than ABHA
+until D-03 closes. Mirrors the existing `ABDM_MODE=mock|sandbox` split — one config flag
+swaps the source and nothing above it changes. Labelled on the doctor screen and in
+`/api/health` as local, never as ABDM, because faking ABDM is a named lose condition.
+
+**2026-09-03 · Bhashini adopted as the ASR and TTS path for Indian languages.** Brief
+section 1.3 names Bhashini / AI4Bharat by name. It is the government's own language
+platform on a Ministry problem statement, its speech-to-text takes a `medical` domain
+parameter, and it is the route to the "major regional languages" section 2.3 asks for.
+Goes behind the existing adapter in `asr.py`; the browser recogniser stays underneath it
+as the offline rung, because gate G1 does not permit a network dependency.
+
 **2026-08-29 · Product shape.** Self-service pre-consultation intake terminal, not a
 records app. Patient screen + doctor screen + server. See `02-product.md`.
 

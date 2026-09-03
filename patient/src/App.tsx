@@ -1,8 +1,12 @@
 // The kiosk shell and its state machine.
 //
 //   attract -> language -> consent -> identify -> interview -> documents -> review -> done
-//                                                      |
-//                                                      +-> escalate  (red flag; over)
+//                                            |         |
+//                              welcome_back -+         +-> escalate  (red flag; over)
+//
+// welcome_back only appears for a patient whose card we have seen before. It shows what
+// is already known and carries it only once they confirm, which is the returning-patient
+// fast path and the reason the 90-second budget in 12-budget-findings.md works.
 //
 // identify is brief 3.4 Step 1 and has two equal paths — with an ABHA card and
 // without. review is Module C's "patient-facing audio confirmation in local
@@ -18,12 +22,13 @@
 //   screen can still complete the whole intake.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, type Action, type Lang, type Question } from "./api";
+import { api, type Action, type Lang, type PriorVisit, type Question } from "./api";
 import { Icon } from "./Icon";
 import { QuestionScreen } from "./QuestionScreen";
 import { Handoff } from "./Handoff";
 import { Identify } from "./screens/Identify";
 import { Review } from "./screens/Review";
+import { WelcomeBack } from "./screens/WelcomeBack";
 import { listenForLanguage, speak, stopSpeaking, warmVoices } from "./speech";
 
 type Stage =
@@ -31,6 +36,7 @@ type Stage =
   | "language"
   | "consent"
   | "identify"
+  | "welcome_back"
   | "interview"
   | "documents"
   | "review"
@@ -73,6 +79,7 @@ export default function App() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [progress, setProgress] = useState({ percent: 0, answered: 0 });
   const [redFlag, setRedFlag] = useState<Action["red_flag"]>(null);
+  const [prior, setPrior] = useState<PriorVisit | null>(null);
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
   const [error, setError] = useState(false);
@@ -93,6 +100,7 @@ export default function App() {
     setSessionId(null);
     setQuestion(null);
     setRedFlag(null);
+    setPrior(null);
     setProgress({ percent: 0, answered: 0 });
     setHint(null);
     setError(false);
@@ -158,6 +166,30 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  };
+
+  // Called when the identify step is done. A card we have seen before diverts through
+  // the confirmation screen; everything else goes straight into the interview.
+  const afterIdentify = (found?: PriorVisit | null) => {
+    if (found && found.lines.length) {
+      setPrior(found);
+      setStage("welcome_back");
+      return;
+    }
+    void startInterview();
+  };
+
+  const confirmPrior = async (confirm: boolean) => {
+    if (!sessionId) return;
+    setBusy(true);
+    try {
+      await api.confirmPriorVisit(sessionId, confirm);
+    } catch {
+      // A failed carry-over is not a failed intake: fall through and ask everything.
+    } finally {
+      setBusy(false);
+    }
+    await startInterview();
   };
 
   const startInterview = async () => {
@@ -352,7 +384,11 @@ export default function App() {
   }
 
   if (stage === "identify") {
-    return <Identify sessionId={sessionId!} lang={lang} onDone={startInterview} />;
+    return <Identify sessionId={sessionId!} lang={lang} onDone={afterIdentify} />;
+  }
+
+  if (stage === "welcome_back" && prior) {
+    return <WelcomeBack prior={prior} lang={lang} onConfirm={confirmPrior} busy={busy} />;
   }
 
   if (stage === "documents") {

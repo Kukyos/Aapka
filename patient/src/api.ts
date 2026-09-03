@@ -45,6 +45,15 @@ export type RedFlag = {
   staff_alert: string;
 };
 
+// What the terminal remembers about a returning patient. `source` is "local" until
+// ABDM credentials exist — it is rendered on screen, never quietly treated as ABHA.
+export type PriorVisit = {
+  source: string;
+  visited_at: number;
+  slots: Record<string, unknown>;
+  lines: { slot: string; label: string; value: string }[];
+};
+
 export type Progress = {
   answered: number;
   asked: number;
@@ -102,9 +111,23 @@ export const api = {
   // Brief 3.4 Step 1 — Identify. Both paths are first-class: gate G1 says a walk-in
   // carrying nothing must be able to complete an intake, so declining is an answer.
   abha: (id: string, body: { abha_id?: string | null; declined?: boolean }) =>
-    call<{ ok: boolean; abha_status: string; abha_id?: string }>(`/session/${id}/abha`, {
-      method: "POST",
-      body: JSON.stringify(body),
+    call<{ ok: boolean; abha_status: string; abha_id?: string; prior_visit: PriorVisit | null }>(
+      `/session/${id}/abha`,
+      { method: "POST", body: JSON.stringify(body) },
+    ),
+
+  // The returning-patient fast path. Nothing is carried until the patient has seen it
+  // and said it is still true, which is why this is a separate call and not something
+  // the ABHA scan does on their behalf.
+  confirmPriorVisit: (id: string, confirm: boolean) =>
+    call<{ ok: boolean; prefilled: string[]; returning: boolean; budget_s?: number }>(
+      `/session/${id}/prior-visit`,
+      { method: "POST", body: JSON.stringify({ confirm }) },
+    ),
+
+  forgetPriorVisit: (id: string) =>
+    call<{ ok: boolean; forgotten: boolean }>(`/session/${id}/prior-visit`, {
+      method: "DELETE",
     }),
 
   scanAbha: async (id: string, blob: Blob) => {
@@ -114,7 +137,12 @@ export const api = {
       method: "POST",
       body: form,
     });
-    return response.json() as Promise<{ ok: boolean; found: boolean; abha_id?: string }>;
+    return response.json() as Promise<{
+      ok: boolean;
+      found: boolean;
+      abha_id?: string;
+      prior_visit?: PriorVisit | null;
+    }>;
   },
 
   summary: (id: string) =>

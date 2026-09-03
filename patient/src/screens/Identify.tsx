@@ -11,7 +11,7 @@
 // carry on without it.
 
 import { useEffect, useRef, useState } from "react";
-import { api, type Lang } from "../api";
+import { api, type Lang, type PriorVisit } from "../api";
 import { speak } from "../speech";
 
 const T = {
@@ -34,7 +34,7 @@ const T = {
 
 export function Identify({
   sessionId, lang, onDone,
-}: { sessionId: string; lang: Lang; onDone: () => void }) {
+}: { sessionId: string; lang: Lang; onDone: (prior?: PriorVisit | null) => void }) {
   const video = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [reading, setReading] = useState(false);
@@ -80,7 +80,10 @@ export function Identify({
       if (result?.found) {
         setOutcome("found");
         speak(text(T.found), lang);
-        window.setTimeout(onDone, 1400);
+        // The card may be one we have seen before. Handing that up rather than acting
+        // on it here keeps the decision with the patient one screen later.
+        const prior = result.prior_visit ?? null;
+        window.setTimeout(() => onDone(prior), 1400);
       } else {
         setOutcome("missed");
         speak(text(T.notFound), lang);
@@ -96,7 +99,7 @@ export function Identify({
     // Recorded, not skipped. The doctor screen and the FHIR bundle both need to know
     // this patient has no ABHA rather than that we forgot to ask.
     await api.abha(sessionId, { declined: true }).catch(() => {});
-    onDone();
+    onDone(null);
   };
 
   return (

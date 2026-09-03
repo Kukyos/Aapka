@@ -82,6 +82,19 @@ CORS_ORIGINS = [o for o in _env("CORS_ORIGINS", "*").split(",") if o]
 # Set PUBLIC_BASE_URL in a real deployment. It is also how the handoff gets HTTPS, which
 # is what a phone needs before it will give the page a microphone or a camera — see
 # D-16 in docs/11-deferred.md.
+# --------------------------------------------------------------------- returning patient
+# Where a returning patient's previous visit comes from.
+#
+# abdm  — the patient's ABHA record, which is where it belongs. Needs D-03.
+# local — our own `prior_visits` table. The prefill mechanism is identical; only the
+#         source differs. Surfaced as "local" everywhere it appears, never as ABDM,
+#         because faking ABDM is a named lose condition in 03-requirements.md.
+# off   — no fast path; every patient is interviewed as new.
+#
+# Same shape as ABDM_MODE above, for the same reason: one flag moves it to the real
+# thing and nothing above this line changes.
+PRIOR_VISIT_SOURCE = _env("PRIOR_VISIT_SOURCE", "local")
+
 PUBLIC_BASE_URL = _env("PUBLIC_BASE_URL")
 PATIENT_APP_PORT = _env("PATIENT_APP_PORT", "5173")
 
@@ -126,6 +139,7 @@ def status() -> dict[str, object]:
         "groq_text_model": GROQ_TEXT_MODEL if GROQ_API_KEY else None,
         "ollama_url": OLLAMA_BASE_URL,
         "abdm_mode": ABDM_MODE,
+        "prior_visit_source": PRIOR_VISIT_SOURCE,
         "abdm_credentials": bool(ABDM_CLIENT_ID and ABDM_CLIENT_SECRET),
         "db": str(DB_PATH),
     }

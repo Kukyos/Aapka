@@ -95,10 +95,26 @@ sandbox credentials.
 with a wrong identifier, which is why the doctor screen shows the number rather than
 silently trusting it.
 
-### D-15 · No returning-patient prefill from a scanned ABHA
-Scanning a card records the number but does not pull the previous visit. The 90-second
-returning-patient budget therefore has nothing to prefill yet, so the fast path is
-short but not actually faster. Depends on D-03 and is the other half of D-10.
+### D-15 · Prior visits are remembered locally, which ABDM should be doing
+**Partially closed 2026-09-03.** Scanning a card now does pull a previous visit, so the
+fast path is genuinely faster — but from a table we keep, which is a thing we would
+rather not keep. The row is written only on explicit `link_to_abha` consent, keyed by a
+SHA-256 of the ABHA number rather than the number, holds only slots the ontology marks
+`carry_over: true`, and has an erasure route (`DELETE /api/session/{id}/prior-visit`)
+because the DPDP Act gives the patient that right.
+
+It remains a compromise: the correct home for a longitudinal record is the patient's
+ABHA, not a hospital terminal's SQLite file.
+**Closes when:** D-03 closes and `PRIOR_VISIT_SOURCE=abdm`, at which point the local
+table is dropped rather than migrated.
+
+### D-19 · Which slots carry between visits has not been clinician-reviewed
+`ontology/slots.yaml` marks 15 slots `carry_over: true`. The reasoning is written out
+above the block and the Prakriti/Vikriti split follows classical doctrine — Prakriti is
+constitutional and fixed, Vikriti is the present imbalance — but the list is ours.
+Carrying something that should have been re-asked is a clinical error, not a UX one.
+**Closes when:** it goes to the same clinicians as D-13. It is one extra page in an
+existing conversation, not a separate ask.
 
 ### D-16 · The phone handoff is touch-only over plain HTTP
 The QR on the attract screen opens the same intake on a patient's own phone, and the
@@ -142,10 +158,19 @@ network, and the offline heuristic has to stay underneath it either way for G1.
 estimates with observed per-node timings and the budget arithmetic in `04-targets.md`
 becomes measured rather than modelled.
 
-### D-10 · Returning-patient fast path is designed, not built
-`04-targets.md` calls it an economic necessity (90 s vs 4 min). The engine supports it
-— slots pre-filled from a previous visit are simply already-answered nodes — but the
-ABHA fetch that would populate them depends on D-03.
+### D-10 · Returning-patient fast path runs on a local source, not ABHA
+**Built 2026-09-03.** The mechanism is complete and real: `engine.prefill()` seeds
+carried slots as already-answered nodes at zero time cost, the patient confirms them on
+the `welcome_back` screen before anything is used, and the budget moves to 90 s only if
+something was actually carried. What is not real is the *source* — the previous visit
+comes from our own `prior_visits` table rather than from the patient's ABHA record.
+
+`PRIOR_VISIT_SOURCE=local|abdm|off` is the switch, mirroring `ABDM_MODE`. It is
+surfaced as "local" in `/api/health`, in `summary.carried_over.source`, on the doctor
+screen banner and on the patient's own confirmation screen — never described as ABDM,
+because faking ABDM is a named lose condition.
+**Closes when:** D-03 closes. `_prior_visit_offer()` in `api.py` is the single function
+that changes and its return shape does not.
 
 ### D-11 · Icon set is keys, not artwork
 Every option carries an `icon` key and the patient app resolves it. The current

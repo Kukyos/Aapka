@@ -19,6 +19,7 @@ type Summary = {
   session_id: string;
   patient: { age_band: string | null; sex: string | null; respondent: string; language: string };
   proxy_note: string | null;
+  carried_over: { count: number; slots: string[]; source: string; note: string } | null;
   red_flag: { label: string; severity: string; staff_alert: string } | null;
   sections: Section[];
   coverage: {
@@ -202,6 +203,16 @@ export default function App() {
             {summary.proxy_note && (
               <Banner tone="amber" title="Not answered by the patient">
                 {summary.proxy_note} Confirm anything that matters directly.
+              </Banner>
+            )}
+            {/* A fact the patient stated ten minutes ago and one they confirmed from a
+                previous visit are not the same evidence. The source is named, not
+                implied — ours is not the patient's ABHA record yet (D-03), and a
+                summary that blurred the two would be the faking-ABDM failure. */}
+            {summary.carried_over && (
+              <Banner tone="amber" title="Carried from a previous visit, not asked today">
+                {summary.carried_over.note} The patient was shown these at the terminal
+                and confirmed them before the interview began.
               </Banner>
             )}
             {summary.abnormal_values.length > 0 && (

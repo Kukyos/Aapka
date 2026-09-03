@@ -475,3 +475,67 @@ def test_stale_sessions_are_reaped(tmp_path, monkeypatch):
         conn.execute("UPDATE sessions SET updated_at = 0 WHERE id = ?", (session.id,))
     assert store.expire_stale(90) == 1
     assert not store.exists(session.id)
+
+
+# --------------------------------------------------------------------- returning patient
+
+
+def test_prefill_only_accepts_carry_over_slots(ont):
+    """The store is data written by a previous version of this software. It is treated
+    as untrusted input, so a complaint or an HPI slot in it is ignored rather than
+    seeded into a fresh interview."""
+    session = eng.Session(id="t", mode="ayush", returning=True)
+    filled = eng.prefill(ont, session, {
+        "identity.age_band": "40_59",
+        "drugs.allergy_known": "yes",
+        "cc.primary": "chest_pain",       # never carried — this visit is about now
+        "ayush.vikriti": "pitta",         # current imbalance, not constitution
+        "nonsense.slot": "x",
+    })
+    assert set(filled) == {"identity.age_band", "drugs.allergy_known"}
+    assert "cc.primary" not in session.slots
+    assert "ayush.vikriti" not in session.slots
+
+
+def test_prakriti_carries_but_vikriti_does_not(ont):
+    """Ayurvedic doctrine, encoded as data rather than as a comment: Prakriti is
+    constitutional and fixed from birth, Vikriti is the present imbalance. Re-screening
+    Prakriti every visit would be a category error; carrying Vikriti would be worse."""
+    carried = eng.carry_over_slots(ont)
+    assert "ayush.prakriti_screen" in carried
+    assert "ayush.vikriti" not in carried
+    assert "ayush.agni" not in carried
+    # Nothing about the present complaint is ever carried.
+    assert not [s for s in carried if s.startswith(("cc.", "hpi.", "ros."))]
+
+
+def test_prefill_costs_no_interview_time(ont):
+    """The 90-second returning budget only works because carried questions are gone
+    rather than hurried. A prefilled slot must cost zero seconds."""
+    session = eng.Session(id="t", mode="ayush", returning=True)
+    eng.prefill(ont, session, {"identity.age_band": "40_59", "personal.tobacco": "never"})
+    assert session.elapsed_s == 0.0
+    assert session.budget_s == eng.BUDGET_RETURNING_S
+
+
+def test_prior_visit_store_holds_no_abha_number(tmp_path, monkeypatch, ont):
+    """The row is keyed by a hash. A copy of this database is not a list of health IDs,
+    and the only way to read a row is to walk in holding the card."""
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "t.db")
+    store.init_db()
+    abha = "12-3456-7890-1234"
+    session = eng.Session(id="s1", language="hi")
+    session.slots = {"identity.age_band": "40_59", "cc.primary": "chest_pain"}
+    store.remember_visit(abha, session, eng.carry_over_slots(ont))
+
+    with store.connect() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM prior_visits").fetchall()]
+    assert len(rows) == 1
+    blob = json.dumps(rows[0])
+    assert abha not in blob and "12345678901234" not in blob
+    # Only carried facts are kept — the complaint is not one of them.
+    assert "chest_pain" not in blob
+    assert store.recall_visit(abha)["slots"] == {"identity.age_band": "40_59"}
+
+    store.forget_visit(abha)
+    assert store.recall_visit(abha) is None

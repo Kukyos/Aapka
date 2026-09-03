@@ -117,6 +117,52 @@ def apply_answer(ont: Ontology, session: Session, answer: Answer) -> None:
     _apply_derivations(ont, session)
 
 
+def carry_over_slots(ont: Ontology) -> set[str]:
+    """Slots the ontology marks as still true at the next visit."""
+    return {slot.id for slot in ont.slots.values() if slot.carry_over}
+
+
+def prefill(ont: Ontology, session: Session, slots: dict[str, Any]) -> list[str]:
+    """Seed a returning patient's interview with what was already known.
+
+    This is the entire returning-patient fast path. There is no separate mode and no
+    second graph: a prefilled slot is an already-answered node, so the same walk that
+    drives a new interview simply has less left to ask. That is why the 90-second budget
+    in `12-budget-findings.md` works out — the questions are not rushed, they are gone.
+
+    Costs zero seconds against the budget, because nobody was asked anything. What the
+    patient does spend time on is confirming the summary of it, which the caller charges
+    for separately.
+
+    Only slots the ontology marks `carry_over: true` are accepted, and unknown or
+    stale slot names are ignored rather than trusted — the store is data from a previous
+    version of this software and is treated as untrusted input.
+    """
+    allowed = carry_over_slots(ont)
+    filled: list[str] = []
+    for slot_id, value in slots.items():
+        if slot_id not in allowed or value is None:
+            continue
+        node = next((n for n in ont.nodes if n.slot == slot_id), None)
+        if node is None:
+            continue
+        session.slots[slot_id] = value
+        session.answers.append(
+            Answer(node_id=node.id, slot=slot_id, value=value,
+                   respondent=session.respondent, source="prefilled", elapsed_s=0.0)
+        )
+        if node.id not in session.asked:
+            session.asked.append(node.id)
+        session.audit.append({
+            "node": node.id,
+            "why": "carried over from the patient's previous visit, confirmed by them",
+            "answered": value,
+        })
+        filled.append(slot_id)
+    _apply_derivations(ont, session)
+    return filled
+
+
 def skip(ont: Ontology, session: Session, node_id: str) -> None:
     """Patient declined a skippable question. Recorded, not silently dropped."""
     node = ont.node(node_id)

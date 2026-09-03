@@ -168,6 +168,10 @@ def consent(session_id: str, body: ConsentIn) -> dict[str, Any]:
     return {"accepted": True}
 
 
+class PriorVisitIn(BaseModel):
+    confirm: bool
+
+
 class AbhaIn(BaseModel):
     abha_id: str | None = None
     declined: bool = False
@@ -197,7 +201,8 @@ def set_abha(session_id: str, body: AbhaIn) -> dict[str, Any]:
     store.set_abha(session_id, formatted)
     session.slots["identity.abha_status"] = "scanned"
     store.save(session)
-    return {"ok": True, "abha_status": "scanned", "abha_id": formatted}
+    return {"ok": True, "abha_status": "scanned", "abha_id": formatted,
+            "prior_visit": _prior_visit_offer(formatted)}
 
 
 @app.post("/api/session/{session_id}/abha/scan")
@@ -222,7 +227,80 @@ async def scan_abha(session_id: str, file: UploadFile = File(...)) -> dict[str, 
     session = _require_session(session_id)
     session.slots["identity.abha_status"] = "scanned"
     store.save(session)
-    return {"ok": True, "found": True, "abha_id": formatted, "provider": read.provider}
+    return {"ok": True, "found": True, "abha_id": formatted, "provider": read.provider,
+            "prior_visit": _prior_visit_offer(formatted)}
+
+
+def _prior_visit_offer(abha_id: str) -> dict[str, Any] | None:
+    """What we remember about this patient, phrased for the screen that asks them.
+
+    Returns None for a first visit, which is the common case and not an error. The
+    caller shows this to the patient and prefills nothing until they say it is right —
+    a remembered fact is an offer, never an assumption.
+    """
+    if config.PRIOR_VISIT_SOURCE == "off":
+        return None
+    if config.PRIOR_VISIT_SOURCE == "abdm":
+        # D-03. The ABHA fetch lands here and the shape below does not change.
+        return None
+    remembered = store.recall_visit(abha_id)
+    if not remembered:
+        return None
+    ont = _ont()
+    return {
+        "source": "local",
+        "visited_at": remembered["visited_at"],
+        "slots": remembered["slots"],
+        # Rendered on the kiosk, so it has to be language-bearing text and not slot ids.
+        "lines": summary.describe_slots(ont, remembered["slots"],
+                                        remembered.get("language") or "en"),
+    }
+
+
+@app.post("/api/session/{session_id}/prior-visit")
+def confirm_prior_visit(session_id: str, body: PriorVisitIn) -> dict[str, Any]:
+    """The returning-patient fast path, and the only way into it.
+
+    Nothing is carried until the patient has been shown it and said it is still true.
+    Declining is not a failure: the interview simply runs as a new one, which is the
+    correct behaviour for a patient whose circumstances changed and the reason the
+    engine has no separate returning-patient graph to fall out of.
+    """
+    session = _require_session(session_id)
+    abha_id = store.get_abha(session_id)
+    if not abha_id:
+        raise HTTPException(status_code=400, detail="no ABHA on this session")
+
+    if not body.confirm:
+        session.audit.append({
+            "node": None,
+            "why": "patient declined the carried-over history; interviewed as new",
+            "answered": None,
+        })
+        store.save(session)
+        return {"ok": True, "prefilled": [], "returning": False}
+
+    offer = _prior_visit_offer(abha_id)
+    if not offer:
+        return {"ok": True, "prefilled": [], "returning": False}
+
+    filled = eng.prefill(_ont(), session, offer["slots"])
+    # The budget moves to 90 s only once something was actually carried. A "returning"
+    # patient we remember nothing about is a new patient with a card.
+    session.returning = bool(filled)
+    store.save(session)
+    return {"ok": True, "prefilled": filled, "returning": session.returning,
+            "budget_s": session.budget_s, "source": offer["source"]}
+
+
+@app.delete("/api/session/{session_id}/prior-visit")
+def forget_prior_visit(session_id: str) -> dict[str, Any]:
+    """Erasure. The DPDP Act gives the patient this right, so it needs a door."""
+    _require_session(session_id)
+    abha_id = store.get_abha(session_id)
+    if abha_id:
+        store.forget_visit(abha_id)
+    return {"ok": True, "forgotten": bool(abha_id)}
 
 
 @app.get("/api/session/{session_id}/next")
@@ -441,6 +519,16 @@ def submit(session_id: str, abha_id: str | None = Body(None, embed=True)) -> dic
     # The doctor screen reads from the bundle directory, not from the session, which
     # is what lets the session be destroyed a line later.
     _publish_for_doctor(session.id, built, receipt)
+
+    # Keep the handful of facts that will still be true next time — but only for a
+    # patient who has an ABHA and consented to it being linked. No consent, no row.
+    # The session itself is destroyed on the next line regardless; this is a separate,
+    # consented record and not a surviving fragment of the interview.
+    consent = store.get_consent(session_id) or {}
+    if (config.PRIOR_VISIT_SOURCE == "local" and resolved_abha
+            and consent.get("link_to_abha")):
+        store.remember_visit(resolved_abha, session, eng.carry_over_slots(ont))
+
     wipe_result = store.submit(session, receipt.get("bundle_path", ""), built["coverage"])
 
     return {

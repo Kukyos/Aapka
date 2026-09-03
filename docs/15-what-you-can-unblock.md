@@ -54,8 +54,19 @@ LLM rung, the vision-OCR rung and the Whisper path in one move, and makes
 offline 11/13 utterance-mapping baseline. Goes in `.env`; `.env.example` already lists
 every key with a comment.
 
-**3 · Decide the Aadhaar question.** See finding C in the audit below. It is a decision,
-not a build, and it should be logged in `06-decisions.md` either way.
+**3 · Bhashini access.** Register at <https://bhashini.gov.in/ulca/user/register>,
+confirm the email (check spam), log in, then **My Profile → Generate**. Three values come
+out and all three are needed: `userId`, `ulcaApiKey`, `InferenceApiKey`.
+
+Bhashini is the Government of India's own speech and translation service — speech to
+text, text to speech, translation, 22 Indian languages. Its speech-to-text takes a
+`domain` parameter that includes **medical**, which is exactly our case. See finding A.
+
+### Where the keys go
+
+All of them go in a `.env` file in the project root, which is gitignored and never
+committed. Copy `.env.example` to `.env` and paste values next to the matching names —
+nothing else is needed, and anything left blank simply falls back to the offline path.
 
 ### Today, because the clock is measured in weeks
 
@@ -187,18 +198,14 @@ between "they left it out" and "they refused to put it in" is the whole argument
 | Returning-patient fast path (D-10) | **your decision** — see below |
 | Tune the barge-in thresholds (D-17) | noise recordings |
 
-### The one question where your answer changes the work
+### Decided 2026-09-03
 
-The returning-patient fast path is designed and the engine already supports it — a
-prefilled slot is just an already-answered node. What it lacks is a source for the
-previous visit, which is ABDM, which is D-03.
+Three answers, now logged in `06-decisions.md`:
 
-It could be built now against a **local** store of previous visits: the prefill
-mechanism would be entirely real, and only the source would be our own SQLite instead of
-ABHA. That turns `04-targets.md`'s "economic necessity" from a slide into a live demo.
-
-It has not been built, because `03-requirements.md` lists faking ABDM as a lose
-condition, and "previous visit pulled from our own database" is one careless slide
-caption away from being read as exactly that. **Your call:** build it with a local source
-and label it unmistakably, or leave it designed-not-built until sandbox credentials
-arrive.
+- **Returning-patient fast path ships with a local source.** The prefill mechanism is
+  real; only the source of the previous visit is ours rather than ABHA. Mirrors the
+  existing `ABDM_MODE=mock|sandbox` split and is labelled local everywhere it surfaces.
+- **We do not take Aadhaar.** Finding C is answered by argument rather than by code, and
+  the argument goes in the submission rather than being left silent.
+- **Bhashini is adopted** behind the existing ASR adapter, with the browser recogniser
+  staying underneath it as the offline rung.
