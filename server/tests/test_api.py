@@ -357,3 +357,32 @@ def test_accepted_summary_is_dropped_from_memory(client):
     from aapka.api import _PENDING
 
     assert session_id not in _PENDING
+
+
+# --------------------------------------------------------------------- phone handoff
+
+
+def test_handoff_url_is_scannable_or_absent():
+    """The kiosk must never render a QR that only works on the kiosk.
+
+    `localhost` is the failure this guards: it is what the terminal's own browser
+    believes it is, and a code encoding it sends every phone in the waiting hall to
+    itself. Either the server produces an address another device can reach, or it says
+    so and the kiosk shows nothing.
+    """
+    from aapka import config
+
+    url, source = config.handoff_url()
+    if url is None:
+        assert source == "unavailable"
+    else:
+        assert source in {"configured", "detected"}
+        assert "localhost" not in url and "127.0.0.1" not in url
+
+
+def test_handoff_route_reports_whether_the_phone_gets_a_camera(client):
+    body = client.get("/api/handoff").json()
+    assert set(body) == {"url", "source", "secure"}
+    # Plain HTTP means no getUserMedia on the phone, so the kiosk has to warn about
+    # papers rather than let a patient find out at the document step. D-16.
+    assert body["secure"] == bool(body["url"] and body["url"].startswith("https://"))

@@ -12,7 +12,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Lang, Question } from "./api";
 import { Icon } from "./Icon";
-import { listen, speak, speechAvailable, stopSpeaking } from "./speech";
+import { armBargeIn, listen, speak, speechAvailable, stopSpeaking } from "./speech";
+import type { BargeHandle } from "./speech";
 
 type Props = {
   question: Question;
@@ -24,6 +25,11 @@ type Props = {
   busy: boolean;
   hint: string | null;
 };
+
+// How long after the prompt ends the barge-in detector stays armed. People answer on
+// the beat, not after it; without this the most natural moment to speak is the one
+// moment the terminal is not listening.
+const BARGE_GRACE_MS = 2500;
 
 const T = {
   listening: { en: "Listening…", hi: "सुन रहे हैं…" },
@@ -48,6 +54,13 @@ export function QuestionScreen({
   const [heard, setHeard] = useState("");
   const [listening, setListening] = useState(false);
   const handle = useRef<{ stop: () => void } | null>(null);
+  const barge = useRef<BargeHandle | null>(null);
+  const listenRef = useRef<() => void>(() => {});
+
+  const disarmBargeIn = () => {
+    barge.current?.stop();
+    barge.current = null;
+  };
 
   const text = (l: { en: string; hi: string } | null | undefined) =>
     l ? (lang === "hi" ? l.hi : l.en) : "";
@@ -62,8 +75,28 @@ export function QuestionScreen({
     setHeard("");
     const prompt = text(question.prompt);
     const help = question.help ? ` ${text(question.help)}` : "";
-    speak(prompt + help, lang);
+
+    // Barge-in. The microphone is open only while the prompt is being spoken, plus a
+    // short grace window for the very common case of someone answering the instant it
+    // stops. It measures loudness and nothing else, and it closes itself either way.
+    let grace: number | undefined;
+    let cancelled = false;
+    void armBargeIn(() => {
+      barge.current = null;
+      listenRef.current();
+    }).then((armed) => {
+      if (cancelled) armed?.stop();
+      else barge.current = armed;
+    });
+
+    speak(prompt + help, lang, () => {
+      grace = window.setTimeout(disarmBargeIn, BARGE_GRACE_MS);
+    });
+
     return () => {
+      cancelled = true;
+      if (grace) window.clearTimeout(grace);
+      disarmBargeIn();
       stopSpeaking();
       handle.current?.stop();
     };
@@ -71,6 +104,7 @@ export function QuestionScreen({
   }, [question.id, lang]);
 
   const startListening = () => {
+    disarmBargeIn();
     stopSpeaking();
     setHeard("");
     setListening(true);
@@ -86,6 +120,8 @@ export function QuestionScreen({
       () => setListening(false),
     );
   };
+
+  listenRef.current = startListening;
 
   const stopListening = () => {
     handle.current?.stop();

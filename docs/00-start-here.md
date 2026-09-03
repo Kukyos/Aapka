@@ -24,6 +24,13 @@ It is not a records app. It is not a chatbot. It never diagnoses anything.
 | `05-domain-reference.md` | Glossary + official AYUSH/ABDM resources + the one architectural rule. | When a term is unfamiliar, or before touching the dialogue engine. |
 | `06-decisions.md` | Decided vs open, with recommended defaults. | Now, and every time something is settled. |
 | `07-build-plan.md` | Phase-by-phase order of work. | To pick what to do next. |
+| `08-rules-and-conventions.md` | The hard rules and how we work. | Before changing anything structural. |
+| `09-architecture.md` | How the pieces fit together. | Before touching the server. |
+| `10-unsourced.md` | Every domain value we could not source, and where the real one comes from. | Before quoting a code or a range. |
+| `11-deferred.md` | Everything knowingly incomplete, with what it blocks. | **This is the live status doc.** |
+| `12-budget-findings.md` | Why the budgets are what they are, and the throughput math. | When someone questions a time number. |
+| `13-eval-results.md` | Generated numbers. Never hand-edited. | When someone questions an accuracy claim. |
+| `14-novelties.md` | Proposed differentiators, and which ones survived the gates. | When a new feature idea shows up. |
 
 ## The five things that decide this
 
@@ -46,11 +53,14 @@ Build the ontology first. Details in `05-domain-reference.md`.
 
 ## Start here, today
 
-1. Answer **D1** (how long the interview may take) and **D3** (AYUSH-first?) in `06-decisions.md`
-2. Start collecting **handwritten prescriptions** — longest lead time in the project
-3. Register for the **ABDM sandbox** — has a milestone process, takes time
-4. Build **Phase 1** from `07-build-plan.md`: ontology + dialogue engine + eval harness.
-   No UI, no models. Just the spine.
+D1 and D3 are answered and Phases 1–6 are built — the checkboxes in `07-build-plan.md`
+are stale, `11-deferred.md` is the live picture. What is actually outstanding needs
+legwork, not code:
+
+1. Start collecting **handwritten prescriptions** — longest lead time in the project (D-01)
+2. Record **hospital ambient noise** — no ASR number is reportable without it (D-02)
+3. Get the red-flag list **read by a clinician** — the one place being wrong hurts someone (D-13)
+4. Register for the **ABDM sandbox** — has a milestone process, takes time (D-03)
 
 ## Known unknowns
 

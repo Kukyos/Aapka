@@ -7,7 +7,7 @@ surprise — if it is not in this file, we think it is done.
 Status key: **BLOCKER** (submission fails without it) · **GAP** (weakens a claim) ·
 **POLISH** (nice to have).
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ---
 
@@ -99,6 +99,43 @@ silently trusting it.
 Scanning a card records the number but does not pull the previous visit. The 90-second
 returning-patient budget therefore has nothing to prefill yet, so the fast path is
 short but not actually faster. Depends on D-03 and is the other half of D-10.
+
+### D-16 · The phone handoff is touch-only over plain HTTP
+The QR on the attract screen opens the same intake on a patient's own phone, and the
+whole interview works there — but a browser gives a page no microphone and no camera
+outside a secure context, so on `http://<lan-ip>:5173` the phone path has no voice
+option and cannot run the document step. The kiosk says so on the QR panel and the
+documents screen tells the patient to bring their papers to the doctor, rather than
+offering a camera button that does nothing.
+
+Gate G2 survives this because the touch path was never the fallback — it is the primary
+path, complete on its own, and the phone is a secondary convenience under G1. What is
+actually lost is Module B on that one path.
+**Closes when:** the handoff is served over HTTPS. `PUBLIC_BASE_URL` exists for exactly
+this and no code changes — any real hospital deployment terminates TLS anyway. A
+self-signed certificate would also work technically but puts a browser security
+interstitial in front of a patient in a waiting hall, which is worse than touch-only.
+
+### D-17 · Barge-in thresholds were tuned on a quiet desk
+`patient/src/speech.ts` detects the patient speaking over the prompt by calibrating a
+noise floor during the first 700 ms of the prompt itself and triggering above a fixed
+margin. The four constants are named and commented, but they have never been in a room
+with fifty people in it and a kiosk speaker at OPD volume.
+Both failure directions are safe by construction — a missed barge-in means the prompt
+finishes and the patient presses the microphone, a false one means the prompt stops and
+the screen says "Listening…", which can be ignored — so this is tuning, not a defect.
+**Closes when:** the constants are set from a session in a real waiting hall, alongside
+the D-02 noise recordings, which is the same trip.
+
+### D-18 · Language detection is a script heuristic, not a language model
+The language screen listens and pre-selects Hindi or English by counting Devanagari
+against Latin characters in what Chrome's `hi-IN` recogniser returns. It is a
+pre-selection the patient still confirms with a tap, it needs no network, and below four
+script-bearing characters it declines to guess. It will not extend to a third language
+that shares a script with one already listed.
+**Closes when:** a third language is added (D-12). Whisper already reports a detected
+language and `asr.py` now returns it, so the server path is the seam — but it needs a
+network, and the offline heuristic has to stay underneath it either way for G1.
 
 ### D-09 · Interview budget is estimated, not measured
 `cost_s` on each node is an estimate. Once real users run the kiosk, replace the

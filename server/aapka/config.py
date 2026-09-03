@@ -8,6 +8,7 @@ nothing configured" is a requirement, not a convenience.
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,6 +73,49 @@ DEFAULT_LANGUAGE = _env("DEFAULT_LANGUAGE", "hi")
 DOCTOR_TOKEN = _env("DOCTOR_TOKEN", "demo-doctor-token")
 
 CORS_ORIGINS = [o for o in _env("CORS_ORIGINS", "*").split(",") if o]
+
+# --------------------------------------------------------------------- phone handoff
+# The kiosk cannot work out its own scannable address: its browser is on localhost, and
+# a QR encoding "localhost" is a QR that works on exactly one device — the one that does
+# not need it. So the server, which can see the machine's real interfaces, supplies it.
+#
+# Set PUBLIC_BASE_URL in a real deployment. It is also how the handoff gets HTTPS, which
+# is what a phone needs before it will give the page a microphone or a camera — see
+# D-16 in docs/11-deferred.md.
+PUBLIC_BASE_URL = _env("PUBLIC_BASE_URL")
+PATIENT_APP_PORT = _env("PATIENT_APP_PORT", "5173")
+
+
+def lan_ip() -> str | None:
+    """This machine's address on the hospital network.
+
+    Opening a UDP socket to an unroutable address asks the OS which interface it would
+    use, without sending a packet or needing anything to answer. `gethostname()` does
+    not work here — on Windows it frequently resolves to loopback or a stale entry.
+    """
+    probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        probe.connect(("10.255.255.255", 1))
+        address = probe.getsockname()[0]
+        return None if address.startswith("127.") else address
+    except OSError:
+        return None
+    finally:
+        probe.close()
+
+
+def handoff_url() -> tuple[str | None, str]:
+    """Where to point a patient's phone, and how honestly we know it.
+
+    Returns (url, source). A null url means the kiosk shows no QR at all rather than a
+    broken one — an unscannable code in a waiting hall is worse than no offer.
+    """
+    if PUBLIC_BASE_URL:
+        return PUBLIC_BASE_URL.rstrip("/"), "configured"
+    address = lan_ip()
+    if not address:
+        return None, "unavailable"
+    return f"http://{address}:{PATIENT_APP_PORT}", "detected"
 
 
 def status() -> dict[str, object]:

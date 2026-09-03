@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    // Bound to every interface, not just loopback: the phone-handoff QR points a
+    // patient's device at this machine's LAN address, and a dev server listening only
+    // on localhost is unreachable from the bench three metres away.
+    host: true,
     // The kiosk talks to the server on 8000. Proxying keeps the browser on one
     // origin, which avoids CORS entirely and means the camera and microphone
     // permissions are granted once for the whole terminal.

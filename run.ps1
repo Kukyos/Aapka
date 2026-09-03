@@ -60,7 +60,10 @@ if ($Test) {
     Say "Budget sweep"
     python -m eval.budget_sweep
     Pop-Location
-    if ($testsFailed -ne 0 -or $evalFailed -ne 0) { exit 1 }
+    Write-Host ""
+    Say "Patient screen checks"
+    Push-Location "$root\patient"; node check.mjs; $clientFailed = $LASTEXITCODE; Pop-Location
+    if ($testsFailed -ne 0 -or $evalFailed -ne 0 -or $clientFailed -ne 0) { exit 1 }
     exit 0
 }
 
@@ -89,6 +92,14 @@ $jobs += Start-Process -PassThru -WindowStyle Minimized -WorkingDirectory "$root
 Start-Sleep -Seconds 4
 Write-Host ""
 Say "Patient kiosk   http://localhost:5173" "Green"
+
+# The phone-handoff QR on the attract screen points here. Printed so a demo can check
+# the address is reachable before a judge scans it.
+$handoff = $null
+try { $handoff = (Invoke-RestMethod "http://localhost:8000/api/handoff" -ErrorAction Stop).url } catch { }
+if ($handoff) { Say "Patient phone   $handoff   (the QR on the attract screen)" "Green" }
+else { Say "Patient phone   no LAN address found - the kiosk will show no QR" "DarkYellow" }
+
 Say "Doctor screen   http://localhost:5174   (token: demo-doctor-token)" "Green"
 Say "Server health   http://localhost:8000/api/health" "Green"
 Write-Host ""

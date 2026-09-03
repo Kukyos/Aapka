@@ -67,6 +67,17 @@ freely. We have, on evidence:
 
 Set in `server/aapka/engine.py`, overridable per session and per deployment.
 
+### The budget caps optional questions, not required ones
+
+`engine.py` drops a node when its `cost_s` exceeds the remaining budget **and the node
+is not `required`**. Required nodes — drug allergy, danger signs, the identity block —
+run regardless. A required node reached near the ceiling therefore carries the interview
+a few seconds past it, which is why several rows in `13-eval-results.md` read 363–368 s
+against a 360 s budget. This is deliberate: the alternative is dropping a safety
+question to save eight seconds. Scenario `rt-13-budget-never-drops-required` asserts it.
+The ceiling bounds the *optional* tail; the true worst case is 360 s plus the cost of
+one required node.
+
 ---
 
 ## Why 84 terminals is not the real number

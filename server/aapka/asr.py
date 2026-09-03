@@ -58,28 +58,37 @@ def _multipart(fields: dict[str, str], filename: str, content: bytes) -> tuple[b
     return b"".join(parts), f"multipart/form-data; boundary={boundary}"
 
 
-def transcribe(audio: bytes, filename: str = "clip.webm", language: str = "hi") -> Transcript:
+def transcribe(audio: bytes, filename: str = "clip.webm",
+               language: str | None = "hi") -> Transcript:
     """Audio to text. Never raises — a dead network is an expected state, and the
-    kiosk falls back to the touch path, which was always the primary path anyway."""
-    if not config.GROQ_API_KEY:
-        return Transcript("", language, "none", False, "no GROQ_API_KEY; use the browser recogniser")
+    kiosk falls back to the touch path, which was always the primary path anyway.
 
-    body, content_type = _multipart(
-        {
-            "model": config.GROQ_ASR_MODEL,
-            "language": language,
-            "response_format": "json",
-            # Priming the decoder with the vocabulary it is about to hear measurably
-            # helps on Indian-accented medical speech, and costs nothing.
-            "prompt": (
-                "Medical intake at an Indian government hospital. The speaker may mix "
-                "Hindi and English. Expect words like bukhar, dard, pet, seena, saans, "
-                "chakkar, ulti, kabz, sugar, BP, dama, khansi, kamzori."
-            ),
-        },
-        filename,
-        audio,
-    )
+    `language=None` lets the model decide rather than pinning it, which is what the
+    language screen wants: a patient who has not chosen a language yet cannot be asked
+    to transcribe in one. `Transcript.language` reports what the model actually heard,
+    not what it was told — a field that echoes its own input is not a detection.
+    """
+    if not config.GROQ_API_KEY:
+        return Transcript(
+            "", language or "", "none", False,
+            "no GROQ_API_KEY; use the browser recogniser",
+        )
+
+    fields = {
+        "model": config.GROQ_ASR_MODEL,
+        # verbose_json is what carries the detected language back. Same cost.
+        "response_format": "verbose_json",
+        # Priming the decoder with the vocabulary it is about to hear measurably
+        # helps on Indian-accented medical speech, and costs nothing.
+        "prompt": (
+            "Medical intake at an Indian government hospital. The speaker may mix "
+            "Hindi and English. Expect words like bukhar, dard, pet, seena, saans, "
+            "chakkar, ulti, kabz, sugar, BP, dama, khansi, kamzori."
+        ),
+    }
+    if language:
+        fields["language"] = language
+    body, content_type = _multipart(fields, filename, audio)
     req = urllib.request.Request(
         f"{config.GROQ_BASE_URL}/audio/transcriptions",
         data=body,
@@ -92,6 +101,11 @@ def transcribe(audio: bytes, filename: str = "clip.webm", language: str = "hi") 
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
-        return Transcript(payload.get("text", "").strip(), language, "groq", True)
+        return Transcript(
+            payload.get("text", "").strip(),
+            payload.get("language") or language or "",
+            "groq",
+            True,
+        )
     except Exception as exc:  # noqa: BLE001
-        return Transcript("", language, "groq", False, str(exc))
+        return Transcript("", language or "", "groq", False, str(exc))

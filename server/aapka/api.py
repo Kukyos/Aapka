@@ -118,6 +118,32 @@ def health() -> dict[str, Any]:
     }
 
 
+@app.get("/api/handoff")
+def handoff() -> dict[str, Any]:
+    """Where to send a patient who would rather use their own phone.
+
+    The kiosk is not the only way in. There are more people in an OPD queue than there
+    will ever be terminals, and a patient holding a phone can fill in the same intake
+    from the bench instead of waiting for the machine — which is the whole throughput
+    argument in `docs/12-budget-findings.md`.
+
+    This is a *secondary* path and gate G1 is the reason it has to stay one: the brief
+    rejects the smartphone as the main route in, and permits it only as a convenience
+    beside a flow that assumes nothing. So the kiosk offers this and never requires it,
+    and the intake on the phone is the same anonymous, temporary session that is wiped
+    on submission — no account, no install, no enrolment.
+    """
+    url, source = config.handoff_url()
+    return {
+        "url": url,
+        "source": source,
+        # Over plain HTTP a phone gives the page no microphone and no camera. The touch
+        # path is complete without either, so the handoff still works — but the kiosk
+        # needs to know, so it can tell the patient to bring their papers to the desk.
+        "secure": bool(url and url.startswith("https://")),
+    }
+
+
 @app.post("/api/session")
 def create_session(body: CreateSession) -> dict[str, Any]:
     store.expire_stale()

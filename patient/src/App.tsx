@@ -21,9 +21,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, type Action, type Lang, type Question } from "./api";
 import { Icon } from "./Icon";
 import { QuestionScreen } from "./QuestionScreen";
+import { Handoff } from "./Handoff";
 import { Identify } from "./screens/Identify";
 import { Review } from "./screens/Review";
-import { speak, stopSpeaking, warmVoices } from "./speech";
+import { listenForLanguage, speak, stopSpeaking, warmVoices } from "./speech";
 
 type Stage =
   | "attract"
@@ -255,54 +256,34 @@ export default function App() {
 
   if (stage === "attract") {
     return (
-      <button
-        onClick={() => setStage("language")}
-        className="flex h-full w-full flex-col items-center justify-center gap-10 bg-[var(--color-brand)] text-white"
-      >
-        <div className="animate-tap-hint">
-          <HandIcon />
+      <div className="relative h-full w-full">
+        <button
+          onClick={() => setStage("language")}
+          className="flex h-full w-full flex-col items-center justify-center gap-10 bg-[var(--color-brand)] text-white"
+        >
+          <div className="animate-tap-hint">
+            <HandIcon />
+          </div>
+          <p className="text-6xl font-bold">नमस्ते</p>
+          <p className="max-w-3xl px-10 text-center text-4xl leading-snug opacity-90">
+            {T.welcome.hi}
+          </p>
+          <p className="max-w-3xl px-10 text-center text-3xl leading-snug opacity-70">
+            {T.welcome.en}
+          </p>
+        </button>
+        {/* Corner, deliberately. The terminal is the offer; the phone is the aside.
+            Outside the button so scanning does not start a kiosk session nobody is
+            standing at. */}
+        <div className="pointer-events-none absolute bottom-8 right-8">
+          <Handoff lang="hi" />
         </div>
-        <p className="text-6xl font-bold">नमस्ते</p>
-        <p className="max-w-3xl px-10 text-center text-4xl leading-snug opacity-90">
-          {T.welcome.hi}
-        </p>
-        <p className="max-w-3xl px-10 text-center text-3xl leading-snug opacity-70">
-          {T.welcome.en}
-        </p>
-      </button>
+      </div>
     );
   }
 
   if (stage === "language") {
-    return (
-      <Centered>
-        <h1 className="mb-12 text-center text-5xl font-bold">
-          अपनी भाषा चुनिए
-          <span className="mt-2 block text-3xl font-normal text-black/50">
-            Choose your language
-          </span>
-        </h1>
-        <div className="grid w-full max-w-4xl grid-cols-2 gap-8">
-          {([
-            { code: "hi" as Lang, native: "हिंदी", english: "Hindi" },
-            { code: "en" as Lang, native: "English", english: "English" },
-          ]).map((option) => (
-            <button
-              key={option.code}
-              // Each language is spoken aloud on hover/press so a non-reader can find
-              // their own without reading any of the others.
-              onPointerDown={() => speak(option.native, option.code)}
-              onClick={() => begin(option.code)}
-              className="tile flex flex-col items-center justify-center gap-3 p-10"
-              style={{ minHeight: 220 }}
-            >
-              <span className="text-5xl font-bold">{option.native}</span>
-              <span className="text-2xl text-black/45">{option.english}</span>
-            </button>
-          ))}
-        </div>
-      </Centered>
-    );
+    return <LanguageScreen onChoose={begin} />;
   }
 
   if (stage === "consent") {
@@ -401,6 +382,74 @@ export default function App() {
   return <Centered><p className="text-3xl text-black/40">{text(T.starting)}</p></Centered>;
 }
 
+// ---------------------------------------------------------------- language
+
+// The first screen, and the first place the terminal can lose someone: a patient who
+// reads neither tile has to guess. So it listens while it asks, and moves the highlight
+// onto whatever it hears.
+//
+// The detection only ever *pre-selects*. Both tiles stay exactly where they were and
+// the patient still confirms with a tap, because gate G2 does not allow the touch path
+// to degrade on account of the voice path having an opinion. A wrong guess costs one
+// tap; a silent hall, a refused microphone or a browser with no recogniser all leave
+// this screen identical to the version that shipped before detection existed.
+
+const LANGUAGES = [
+  { code: "hi" as Lang, native: "हिंदी", english: "Hindi" },
+  { code: "en" as Lang, native: "English", english: "English" },
+];
+
+const CONFIRM = {
+  hi: "हिंदी? नीचे छूकर पक्का कीजिए।",
+  en: "English? Tap below to confirm.",
+};
+
+function LanguageScreen({ onChoose }: { onChoose: (lang: Lang) => void }) {
+  const [suggested, setSuggested] = useState<Lang | null>(null);
+
+  useEffect(() => {
+    const handle = listenForLanguage((detected) => {
+      setSuggested(detected);
+      // Spoken in the detected language, which is itself the check: a patient who does
+      // not understand the confirmation knows immediately that the guess was wrong.
+      speak(CONFIRM[detected], detected);
+    });
+    return () => handle?.stop();
+  }, []);
+
+  return (
+    <Centered>
+      <h1 className="mb-12 text-center text-5xl font-bold">
+        अपनी भाषा चुनिए
+        <span className="mt-2 block text-3xl font-normal text-black/50">
+          Choose your language
+        </span>
+      </h1>
+      <div className="grid w-full max-w-4xl grid-cols-2 gap-8">
+        {LANGUAGES.map((option) => (
+          <button
+            key={option.code}
+            // Each language is spoken aloud on hover/press so a non-reader can find
+            // their own without reading any of the others.
+            onPointerDown={() => speak(option.native, option.code)}
+            onClick={() => onChoose(option.code)}
+            className={`tile flex flex-col items-center justify-center gap-3 p-10 ${
+              suggested === option.code ? "tile-selected" : ""
+            }`}
+            style={{ minHeight: 220 }}
+          >
+            <span className="text-5xl font-bold">{option.native}</span>
+            <span className="text-2xl text-black/45">{option.english}</span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-10 h-8 text-2xl text-black/40">
+        {suggested ? CONFIRM[suggested] : ""}
+      </p>
+    </Centered>
+  );
+}
+
 // ---------------------------------------------------------------- documents
 
 function DocumentsScreen({
@@ -467,8 +516,16 @@ function DocumentsScreen({
           {stream ? (
             <video ref={video} autoPlay playsInline muted className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-2xl text-white/50">
-              {lang === "hi" ? "कैमरा उपलब्ध नहीं है" : "No camera available"}
+            // A phone on the handoff path over plain HTTP has no camera at all, and so
+            // does a kiosk whose camera is unplugged. Both need to be told what to do
+            // instead, not merely that something is missing. D-16 in 11-deferred.md.
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-10 text-center text-2xl text-white/60">
+              <p>{lang === "hi" ? "कैमरा उपलब्ध नहीं है" : "No camera available"}</p>
+              <p className="text-xl text-white/40">
+                {lang === "hi"
+                  ? "अपने काग़ज़ डॉक्टर के पास ले जाइए। बाक़ी जवाब भेज दिए जाएँगे।"
+                  : "Take your papers to the doctor. The rest of your answers will still be sent."}
+              </p>
             </div>
           )}
           {/* Framing guide. A patient holding a crumpled paper at arm's length needs to

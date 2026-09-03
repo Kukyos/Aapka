@@ -80,6 +80,11 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Where to point a patient's own phone. Null when the server cannot work out a
+  // scannable address, in which case the kiosk shows no QR rather than a broken one.
+  handoff: () =>
+    call<{ url: string | null; source: string; secure: boolean }>("/handoff"),
+
   createSession: (language: Lang, mode = "ayush") =>
     call<{ session_id: string; budget_s: number }>("/session", {
       method: "POST",
