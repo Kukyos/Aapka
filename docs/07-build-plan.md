@@ -1,5 +1,11 @@
 # Build plan
 
+> **Status, 2026-09-03.** Phases 1 to 6 are built and Phase 7 is not. The checkboxes
+> below are the original plan and are deliberately left as written — this file is the
+> plan, not the tracker. For what is actually outstanding, read `11-deferred.md`; for
+> the measured numbers, `13-eval-results.md`; for the three differentiators added on
+> top, `14-novelties.md`.
+
 Ordered so that the riskiest, longest-lead things start first and the demo is
 always in a showable state.
 

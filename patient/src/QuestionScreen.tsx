@@ -121,7 +121,11 @@ export function QuestionScreen({
     );
   };
 
-  listenRef.current = startListening;
+  // Kept current after every render rather than during one, so a barge-in that fires
+  // between renders opens the microphone against the question actually on screen.
+  useEffect(() => {
+    listenRef.current = startListening;
+  });
 
   const stopListening = () => {
     handle.current?.stop();
