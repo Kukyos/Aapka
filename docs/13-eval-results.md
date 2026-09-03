@@ -8,12 +8,12 @@ Mode: **offline — no network, no model**. The offline run is the headline, bec
 
 | Metric | Value |
 |---|---|
-| Scenarios passed | 45 / 45 |
+| Scenarios passed | 47 / 47 |
 | Red-flag recall | 9 / 9 = **1.0** |
 | False-positive control | pass |
 | Voice utterances mapped offline | 11 / 13 = 0.846 |
-| Mean interview length | 237.4 s |
-| Mean questions asked | 25.7 |
+| Mean interview length | 232.0 s |
+| Mean questions asked | 25.1 |
 
 ## Not measured
 
@@ -32,7 +32,7 @@ Stated explicitly because a missing number is honest and an invented one is not.
 | abandonment | 5 / 5 |
 | audit | 1 / 1 |
 | ayush | 10 / 10 |
-| budget | 2 / 2 |
+| budget | 3 / 3 |
 | cardiac | 2 / 2 |
 | catch_all | 1 / 1 |
 | core | 4 / 4 |
@@ -51,8 +51,9 @@ Stated explicitly because a missing number is honest and an invented one is not.
 | proxy | 5 / 5 |
 | red_flag | 10 / 10 |
 | respiratory | 1 / 1 |
-| routine | 12 / 12 |
-| safety | 2 / 2 |
+| returning | 2 / 2 |
+| routine | 13 / 13 |
+| safety | 3 / 3 |
 | specificity | 1 / 1 |
 | voice | 4 / 4 |
 
@@ -96,6 +97,8 @@ Stated explicitly because a missing number is honest and an invented one is not.
 | `rt-04-female-menstrual` | 28 | 239 s | 3 of 5 | 0 of 10 | pass |
 | `rt-05-male-never-offered-menstrual` | 28 | 243 s | 3 of 5 | 0 of 10 | pass |
 | `rt-06-cough-no-pain-questions` | 28 | 243 s | 3 of 5 | 0 of 10 | pass |
+| `rt-16-returning-carries-and-shortens` | 11 | 101 s | 3 of 7 | 2 of 10 | pass |
+| `rt-17-returning-never-carries-this-visit` | 13 | 121 s | 3 of 7 | 1 of 10 | pass |
 | `rt-07-returning-patient-budget` | 15 | 136 s | 3 of 7 | 1 of 10 | pass |
 | `rt-08-skin-complaint` | 28 | 243 s | 3 of 5 | 0 of 10 | pass |
 | `rt-09-drug-allergy-always-asked` | 16 | 148 s | 3 of 6 | 1 of 10 | pass |

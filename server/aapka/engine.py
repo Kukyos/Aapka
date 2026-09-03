@@ -151,8 +151,11 @@ def prefill(ont: Ontology, session: Session, slots: dict[str, Any]) -> list[str]
             Answer(node_id=node.id, slot=slot_id, value=value,
                    respondent=session.respondent, source="prefilled", elapsed_s=0.0)
         )
-        if node.id not in session.asked:
-            session.asked.append(node.id)
+        # Deliberately NOT added to `session.asked`. That list means "questions put to
+        # this patient at this terminal", and it is what the eval table counts and what
+        # the progress bar divides by. A carried answer was never asked, and counting it
+        # would make a returning interview look longer than the one it replaced.
+        # `candidates()` excludes it anyway, by slot rather than by node.
         session.audit.append({
             "node": node.id,
             "why": "carried over from the patient's previous visit, confirmed by them",

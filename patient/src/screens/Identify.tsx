@@ -30,6 +30,11 @@ const T = {
   },
   carryOn: { en: "Carry on without it", hi: "इसके बिना आगे बढ़िए" },
   noCamera: { en: "No camera on this terminal", hi: "इस टर्मिनल पर कैमरा नहीं है" },
+  type: { en: "Type the number instead", hi: "नंबर टाइप कीजिए" },
+  typeTitle: { en: "Type your 14-digit health ID", hi: "अपना 14 अंकों का हेल्थ आईडी टाइप कीजिए" },
+  back: { en: "Back", hi: "वापस" },
+  confirmNumber: { en: "That is my number", hi: "यही मेरा नंबर है" },
+  badNumber: { en: "That number is not 14 digits", hi: "यह नंबर 14 अंकों का नहीं है" },
 };
 
 export function Identify({
@@ -39,6 +44,12 @@ export function Identify({
   const streamRef = useRef<MediaStream | null>(null);
   const [reading, setReading] = useState(false);
   const [outcome, setOutcome] = useState<"idle" | "found" | "missed">("idle");
+  // Typing is not a fallback for the blind — it is the path for a card the camera
+  // cannot read, which is most crumpled cards, and the only way in when the terminal
+  // has no camera or the OCR rungs are unavailable. Without it the returning-patient
+  // fast path is reachable only by a successful scan.
+  const [typing, setTyping] = useState(false);
+  const [digits, setDigits] = useState("");
   const text = (l: { en: string; hi: string }) => (lang === "hi" ? l.hi : l.en);
 
   useEffect(() => {
@@ -95,12 +106,81 @@ export function Identify({
     }
   };
 
+  const submitTyped = async () => {
+    if (digits.length !== 14) return;
+    setReading(true);
+    try {
+      const result = await api.abha(sessionId, { abha_id: digits });
+      setOutcome("found");
+      speak(text(T.found), lang);
+      const prior = result.prior_visit ?? null;
+      window.setTimeout(() => onDone(prior), 1200);
+    } catch {
+      setOutcome("missed");
+    } finally {
+      setReading(false);
+    }
+  };
+
   const withoutCard = async () => {
     // Recorded, not skipped. The doctor screen and the FHIR bundle both need to know
     // this patient has no ABHA rather than that we forgot to ask.
     await api.abha(sessionId, { declined: true }).catch(() => {});
     onDone(null);
   };
+
+  if (typing) {
+    const grouped = digits.replace(/(\d{2})(\d{0,4})(\d{0,4})(\d{0,4})/, (_, a, b, c, d) =>
+      [a, b, c, d].filter(Boolean).join("-"),
+    );
+    return (
+      <div className="flex h-full flex-col px-8 py-7">
+        <h1 className="text-4xl font-bold leading-tight">{text(T.typeTitle)}</h1>
+        <div className="mt-5 rounded-2xl bg-white px-6 py-5 text-center">
+          <span className="text-5xl font-bold tracking-[0.15em] tabular-nums">
+            {grouped || "  "}
+          </span>
+        </div>
+        <div className="mx-auto mt-5 grid w-full max-w-2xl flex-1 grid-cols-3 gap-4">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((key) => (
+            <button
+              key={key}
+              onClick={() => setDigits((d) => (d + key).slice(0, 14))}
+              className="tile text-5xl font-bold"
+            >
+              {key}
+            </button>
+          ))}
+          <button
+            onClick={() => setDigits((d) => d.slice(0, -1))}
+            className="tile text-4xl font-bold text-black/50"
+            aria-label={text(T.back)}
+          >
+            ⌫
+          </button>
+          <button
+            onClick={() => setDigits((d) => (d + "0").slice(0, 14))}
+            className="tile text-5xl font-bold"
+          >
+            0
+          </button>
+          <button
+            onClick={submitTyped}
+            disabled={digits.length !== 14 || reading}
+            className="tile bg-[var(--color-brand)] text-2xl font-bold text-white disabled:opacity-30"
+          >
+            {text(T.confirmNumber)}
+          </button>
+        </div>
+        <button
+          onClick={() => { setTyping(false); setDigits(""); }}
+          className="btn mt-5 bg-white text-2xl text-black/60"
+        >
+          {text(T.back)}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col px-8 py-7">
@@ -144,7 +224,13 @@ export function Identify({
         >
           {text(T.scan)}
         </button>
-        <button onClick={withoutCard} className="btn flex-1 bg-white text-2xl text-[var(--color-brand)]">
+        <button
+          onClick={() => setTyping(true)}
+          className="btn flex-1 bg-white text-2xl text-[var(--color-brand)]"
+        >
+          {text(T.type)}
+        </button>
+        <button onClick={withoutCard} className="btn flex-1 bg-white text-2xl text-black/55">
           {outcome === "missed" ? text(T.carryOn) : text(T.none)}
         </button>
       </div>

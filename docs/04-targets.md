@@ -39,7 +39,7 @@ Two conclusions fall straight out:
 | Metric | Target |
 |---|---|
 | New patient, full intake | ≤ 4 minutes |
-| Returning patient (ABHA history exists) | ≤ 90 seconds |
+| Returning patient (ABHA history exists) | ≤ 90 seconds — **measured 101 s** (`rt-16`, 11 facts carried). See `12-budget-findings.md`. |
 | Time from patient finishing to summary on doctor screen | ≤ 10 seconds |
 | Doctor time to read summary | ≤ 15 seconds (measure it with a real reader) |
 

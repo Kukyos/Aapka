@@ -566,6 +566,76 @@ SCENARIOS: list[dict] = [
         "expect": {"node_not_asked": "hpi.radiation"},
     },
     {
+        "id": "rt-16-returning-carries-and-shortens",
+        "tags": ["routine", "returning", "budget"],
+        "mode": "ayush",
+        "returning": True,
+        "note": (
+            "The fast path, measured. A patient we already know arrives with the same "
+            "kind of complaint. What was carried must not be asked again, and the "
+            "interview must be materially shorter than the same patient as a stranger."
+        ),
+        "prefill": {
+            "identity.age_band": "40_59", "identity.sex": "female",
+            "past.conditions": ["diabetes"], "past.surgeries": "no",
+            "past.hospitalisation": "no", "drugs.allergy_known": "none",
+            "family.conditions": ["diabetes"], "personal.diet": "vegetarian",
+            "personal.tobacco": "never", "personal.alcohol": "never",
+            "ayush.prakriti_screen": ["pitta_sharp_appetite"],
+        },
+        "script": _s(**{
+            "cc.primary": "abdominal_pain", "hpi.onset": "gradual",
+            "hpi.duration": {"n": 3, "unit": "days"}, "hpi.associated": ["none"],
+            "hpi.severity": 4, "ros.danger_signs": ["none"],
+            "drugs.taking_now": False, "docs.has_papers": False,
+        }),
+        "expect": {
+            "escalates": False,
+            "required_all_asked": True,
+            "prefilled_min": 10,
+            "carried_not_reasked": True,
+            # Time, not question count, is the constraint the throughput argument rests
+            # on. A carried fact costs zero seconds, so the engine spends the freed
+            # time on the current complaint instead — the visit gets shorter *and*
+            # deeper, which is the opposite of what "fast path" usually means.
+            "max_elapsed_s": 130,
+        },
+    },
+    {
+        "id": "rt-17-returning-never-carries-this-visit",
+        "tags": ["returning", "safety"],
+        "mode": "ayush",
+        "returning": True,
+        "note": (
+            "The store is data from a previous version of this software and is treated "
+            "as untrusted. A complaint, an HPI answer or a current imbalance sitting in "
+            "it must be refused, not seeded — a patient arriving with a new problem who "
+            "is handed last visit's chief complaint is the worst failure this path has."
+        ),
+        "prefill": {
+            "identity.age_band": "60_74",
+            "drugs.allergy_known": "none",
+            # None of the following may ever be carried.
+            "cc.primary": "chest_pain",
+            "hpi.severity": 9,
+            "ayush.vikriti": "pitta",
+            "ros.danger_signs": ["chest_pain_radiating"],
+        },
+        "script": _s(**{
+            "identity.age_band": "60_74",
+            "cc.primary": "joint_pain", "hpi.onset": "gradual",
+            "hpi.duration": {"n": 6, "unit": "months"}, "hpi.associated": ["none"],
+            "hpi.severity": 5, "ros.danger_signs": ["none"],
+            "drugs.taking_now": False, "docs.has_papers": False,
+        }),
+        "expect": {
+            "escalates": False,
+            "never_carried": ["cc.primary", "hpi.severity", "ayush.vikriti",
+                              "ros.danger_signs"],
+            "required_all_asked": True,
+        },
+    },
+    {
         "id": "rt-07-returning-patient-budget",
         "tags": ["routine", "budget"],
         "mode": "ayush",

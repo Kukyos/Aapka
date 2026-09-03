@@ -67,6 +67,35 @@ freely. We have, on evidence:
 
 Set in `server/aapka/engine.py`, overridable per session and per deployment.
 
+## The returning-patient fast path, measured
+
+Built 2026-09-03 and now exercised by three eval scenarios rather than asserted.
+Numbers from `13-eval-results.md`, same ontology, same engine:
+
+| Scenario | Facts carried | Questions asked | Time |
+|---|---|---|---|
+| A new patient, AYUSH mode | — | 28–38 | 240–364 s |
+| `rt-07` returning, nothing remembered | 0 | 15 | 136 s |
+| `rt-16` returning, 11 facts remembered | 11 | 11 | **101 s** |
+
+Three things fall out, and the second was not what we expected.
+
+**1 · The mechanism works and is worth roughly a 3.5x reduction.** 101 s against 364 s
+for the same patient arriving as a stranger. That is the throughput argument, and it is
+now measured rather than modelled.
+
+**2 · The budget is spent on depth, not returned as speed.** `rt-16` captured *2 of 10*
+Dashavidha parameters against `rt-07`'s 1, on a shorter clock. Because a carried answer
+costs zero seconds, the freed time does not shorten the visit proportionally — the
+engine spends it on the current complaint instead. The fast path makes a returning
+visit shorter **and** deeper, which is the opposite of the usual trade.
+
+**3 · The measured time is 101 s, not the 90 s budget.** `04-targets.md` sets 90 s as
+the target and the engine sets it as the ceiling; the overshoot is the required-node
+tail described immediately below, and the honest number to quote is **~101 s**. Quote
+that one. A target is a thing we aimed at and a measurement is a thing we did, and only
+one of them belongs on a slide.
+
 ### The budget caps optional questions, not required ones
 
 `engine.py` drops a node when its `cost_s` exceeds the remaining budget **and the node

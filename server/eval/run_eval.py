@@ -67,6 +67,14 @@ def _run_interview(ont, scenario: dict, *, use_llm: bool) -> tuple[eng.Session, 
         mode=scenario.get("mode", "ayush"),
         returning=scenario.get("returning", False),
     )
+    # A returning patient arrives with facts already known. Seeding them through the
+    # real `prefill` — not by writing into `slots` — is the point: the harness measures
+    # the fast path the kiosk actually runs, including that carried answers cost no
+    # interview time and that non-carry slots in the store are refused.
+    prefilled: list[str] = []
+    if scenario.get("prefill"):
+        prefilled = eng.prefill(ont, session, scenario["prefill"])
+
     script = dict(scenario["script"])
     utterances = scenario.get("utterances", {})
     voice_stats = {"attempted": 0, "resolved": 0, "unclear": [], "wrong": []}
@@ -201,6 +209,20 @@ def _score(ont, scenario: dict, session: eng.Session, voice: dict, *, use_llm: b
     if "max_elapsed_s" in expect:
         result.check("within budget", session.elapsed_s <= expect["max_elapsed_s"],
                      f"{session.elapsed_s:.0f}s > {expect['max_elapsed_s']}s")
+    if "prefilled_min" in expect:
+        carried = [a for a in session.answers if a.source == "prefilled"]
+        result.check("carried from previous visit",
+                     len(carried) >= expect["prefilled_min"],
+                     f"carried {len(carried)}, wanted at least {expect['prefilled_min']}")
+    if "never_carried" in expect:
+        carried = {a.slot for a in session.answers if a.source == "prefilled"}
+        leaked = [s for s in expect["never_carried"] if s in carried]
+        result.check("this visit's facts not carried", not leaked, f"carried {leaked}")
+    if expect.get("carried_not_reasked"):
+        carried = {a.slot for a in session.answers if a.source == "prefilled"}
+        reasked = [n for n in session.asked if ont.node(n).slot in carried]
+        result.check("carried facts never asked again", not reasked,
+                     f"re-asked {reasked}")
     if expect.get("required_all_asked"):
         enabled = eng.modes_enabled(session)
         required = [n for n in ont.nodes if n.required and n.mode in enabled]
