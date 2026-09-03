@@ -31,6 +31,7 @@ It is not a records app. It is not a chatbot. It never diagnoses anything.
 | `12-budget-findings.md` | Why the budgets are what they are, and the throughput math. | When someone questions a time number. |
 | `13-eval-results.md` | Generated numbers. Never hand-edited. | When someone questions an accuracy claim. |
 | `14-novelties.md` | Proposed differentiators, and which ones survived the gates. | When a new feature idea shows up. |
+| `15-what-you-can-unblock.md` | What only the owner can do, and the audit against the brief. | When you have time and want the highest-leverage thing. |
 
 ## The five things that decide this
 

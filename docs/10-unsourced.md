@@ -14,7 +14,7 @@ one is not.
 Every consumer of these values checks `provenance` and renders anything marked
 `PLACEHOLDER` as pending — never as a code, never as a finding.
 
-Last verified: 2026-09-02
+Last verified: 2026-09-03
 
 ---
 
@@ -25,9 +25,9 @@ Last verified: 2026-09-02
 | `sourced` | Verified against a published, citable source. Safe to display. |
 | `PLACEHOLDER` | Structure only. Rendered as "pending" everywhere it appears. |
 
-`server/tests/test_codes.py` enforces the invariant: anything marked `sourced` must
-have a non-empty value, and anything with a non-empty value must be marked `sourced`.
-You cannot quietly promote a guess.
+`test_codes_file_invariant_holds` in `server/tests/test_core.py` enforces the
+invariant: anything marked `sourced` must have a non-empty value, and anything with a
+non-empty value must be marked `sourced`. You cannot quietly promote a guess.
 
 ---
 
