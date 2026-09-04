@@ -102,12 +102,19 @@ API requires OAuth client credentials.
 
 ## 3 · ICD-11 MMS biomedical codes — `ontology/codes.yaml`
 
-**Status:** `PLACEHOLDER`. The `term` field carries the standard English term where
-we are confident of the wording; the `code` field is empty in every case.
+**Status: SOURCED, 2026-09-04.** Thirteen of the fourteen chief complaints now carry a
+real ICD-11 MMS code, pulled from the WHO API and checkable at
+<https://icd.who.int/browse/2025-01/mms/en>.
 
-**Why the terms but not the codes:** the term is a label, and being wrong about it is
-visible and harmless. A code is an assertion about a classification we have not read.
-Same API credentials close this as item 2.
+Every one is a **symptom** code, never a disease code — `MD12` Cough, `MG22` Fatigue,
+`ME82` Pain in joint, `MD30.Z` Chest pain unspecified. Where the API returned a disease
+sharing the word — `8A8Z` Headache disorders, `BA40` Angina pectoris, `CA23` Asthma —
+it was rejected. The patient reported a symptom and nobody has examined them; coding it
+as a disease would assert something the interview did not establish.
+
+The fourteenth is `other`, marked `not_coded`. "Other" is a bucket on a touchscreen
+rather than a clinical concept; what the patient actually has is in `cc.narration` and
+is the physician's to code.
 
 ---
 
@@ -194,7 +201,13 @@ review", which is arguably the more honest scope for an intake terminal regardle
 
 Stated as a strength, because it is one:
 
-> Every code slot in our output is present and correctly typed. None of them is
-> filled with a guess. We know exactly which four sources close the gaps — a NAMASTE
-> portal account, ICD-11 API credentials, the CCRAS manual, and the deploying
-> hospital's own lab ranges — and none of them requires a change to the schema.
+> Every code slot in our output is present and correctly typed, and none is filled
+> with a guess. ICD-11 is sourced — sixteen codes pulled from the WHO API, symptom
+> codes for complaints and pattern codes for dosha findings. Three gaps remain and we
+> know exactly what closes each: a NAMASTE portal account, the CCRAS manual, and the
+> deploying hospital's own lab ranges. None requires a schema change.
+>
+> One slot is empty on purpose rather than for want of a source. We hold all 648 ICD-11
+> TM2 codes and attach none of them to a chief complaint, because TM2 codes disorders
+> and a kiosk choosing one would be diagnosing. Having the data and declining to use it
+> is a different claim from not having it, and `provenance: not_coded` says which.

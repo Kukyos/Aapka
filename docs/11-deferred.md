@@ -68,7 +68,7 @@ attaching one to a patient who said they have a cough would be a diagnosis made 
 kiosk, which hard rule 1 forbids. We hold all 648 codes and decline to use them there.
 A new provenance level, `not_coded`, distinguishes that refusal from a missing source.
 
-### D-05-OLD · ICD-11 TM2 codes are placeholders (superseded)
+### D-05 · superseded detail, kept for the trail
 TM2 (Ayurveda / Siddha / Unani) was added to ICD-11 in 2025. The publicly downloadable
 Chapter 26 PDF is **TM1** — East Asian medicine — and using those codes for an
 Ayurveda intake would be wrong, not merely unsourced.
@@ -84,7 +84,7 @@ labelled as such in the data and on the doctor screen.
 must never call this a Prakriti *determination* — it is a screen.
 
 ### D-07 · Lab reference ranges are a small hand-entered set
-`documents.py` flags out-of-range values only for the analytes in `reference_ranges`.
+`documents.py` flags out-of-range values only for the analytes in `REFERENCE_RANGES`.
 Anything outside that set is extracted but not flagged.
 **Closes when:** ranges are taken from the demo hospital's own lab report headers —
 which is the correct source anyway, since ranges are assay-specific.

@@ -83,7 +83,7 @@ in the project.
 **Build the measuring tool before the features it measures.**
 
 What it is:
-1. A set of scripted patient scenarios — say 40 — each with a known ground-truth
+1. A set of scripted patient scenarios — 47 as built, 40 was the original target — each with a known ground-truth
    structured history written by hand.
 2. For voice: pre-recorded audio of each scenario, in multiple languages/accents,
    with hospital noise mixed in at several SNR levels.

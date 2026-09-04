@@ -9,54 +9,52 @@ Existing D-numbers are not re-explained here; they live in `11-deferred.md`.
 
 ---
 
-## The finding that reorders everything
+## Status, 2026-09-04
 
-There is no `.env` on this machine, Tesseract is not installed, and Ollama is not
-running. Verified, not assumed:
+Updated after the Groq and ICD-11 credentials landed. What follows is what is *still*
+outstanding; the closed items stay recorded so this list is honest about its own age.
 
-```
-tesseract installed: False
-llm rungs          : {'groq': False, 'ollama': False}
-groq key           : False
-```
+### Closed
 
-Consequences, stated plainly:
+**ICD-11 API credentials — obtained.** TM2 is pulled and cached, sixteen codes in
+`ontology/codes.yaml` are `sourced`, and both code systems reach the FHIR bundle. Closes
+D-05 and item 3 of `10-unsourced.md`. Re-pull with `python -m tools.fetch_icd11`.
 
-- **The document pipeline has never run. On either rung.** `documents.py` and `ocr.py`
-  are written, typed and unit-tested against fixtures, but no image has ever been
-  through them. This is not "the cloud tier is untested" — it is the whole of Module B.
-- **All three NLU rungs above the keyword matcher have never executed.** Every number
-  in `13-eval-results.md` is the deterministic floor with the models switched off.
-  That floor is the honest headline for gate G1 and should stay the headline — but
-  right now it is also the *ceiling*, because nothing above it has been exercised once.
-- **Server-side ASR has never run.** The browser recogniser is what has been used.
+**Groq API key — obtained and working.** Three things stood between the key and a live
+model rung, none of them the key: `urllib`'s default User-Agent is refused by the CDN
+with a 403 that reads exactly like an auth failure, the configured model id had been
+retired, and the account carries no vision model. The first two are fixed in code.
 
-None of this is a defect; the fallbacks are the design. But it means three subsystems
-are currently claims rather than measurements, and two of the three unblock for free.
+With the rung live, `13-eval-results.md` carries both the offline and the with-models
+numbers. Voice mapping goes from 11/13 to 12/13. Red-flag recall is 9/9 either way,
+because escalation is decided by rules rather than by a model.
+
+### The blocker is no longer a key
+
+**Tesseract is not installed, and the Groq account has no vision model.** The OCR ladder
+therefore has no rung at all, on either side. `documents.py` and `ocr.py` are written,
+typed and unit-tested against fixtures, but **no image has ever been through them**.
+That is not "the cloud tier is untested" — it is the whole of Module B.
 
 ---
 
 ## Your list
 
-### Today, minutes each — these unblock the most per unit of your time
+### Today, minutes each
 
-**1 · ICD-11 API credentials.** Free, application-based, at <https://icd.who.int/icdapi>.
-Closes D-05 and item 3 of `10-unsourced.md` — the TM2 traditional-medicine codes and
-the MMS biomedical codes. This is the single most visible credibility item available:
-it converts every `PLACEHOLDER` in `ontology/codes.yaml` that is not NAMASTE into a
-real, judge-checkable code. Note the trap already documented — the free Chapter 26 PDF
-is **TM1** (East Asian medicine) and is wrong for an Ayurveda intake, which is why the
-API is the only correct route.
+**1 · Install Tesseract.** The one remaining item that unblocks an entire module and
+needs nobody else's approval. `winget install UB-Mannheim.TesseractOCR`, then restart the
+shell. Step by step, including the Windows PATH detail that catches people, is in
+`16-setup-guides.md`.
 
-**2 · A Groq API key.** Free tier, <https://console.groq.com>. Two minutes. Turns on the
-LLM rung, the vision-OCR rung and the Whisper path in one move, and makes
-`python -m eval.run_eval --llm` meaningful — a second measured number to sit beside the
-offline 11/13 utterance-mapping baseline. Goes in `.env`; `.env.example` already lists
-every key with a comment.
+**2 · Get a NAMASTE portal account.** D-04, and the last unsourced code system now that
+ICD-11 is closed. It is a government portal and the flow is not obvious; there is a
+walkthrough in `16-setup-guides.md`.
 
-**3 · Bhashini access.** Register at <https://bhashini.gov.in/ulca/user/register>,
-confirm the email (check spam), log in, then **My Profile → Generate**. Three values come
-out and all three are needed: `userId`, `ulcaApiKey`, `InferenceApiKey`.
+**3 · Bhashini access — requested 2026-09-04, awaiting approval.** Registered at
+<https://bhashini.gov.in/ulca/user/register>; the key request needs a manager's approval
+and was told to expect at least two days. Three values come back and all three are
+needed: `userId`, `ulcaApiKey`, `InferenceApiKey`.
 
 Bhashini is the Government of India's own speech and translation service — speech to
 text, text to speech, translation, 22 Indian languages. Its speech-to-text takes a
@@ -66,7 +64,11 @@ text, text to speech, translation, 22 Indian languages. Its speech-to-text takes
 
 All of them go in a `.env` file in the project root, which is gitignored and never
 committed. Copy `.env.example` to `.env` and paste values next to the matching names —
-nothing else is needed, and anything left blank simply falls back to the offline path.
+nothing else is needed, and anything left blank falls back to the offline path.
+
+**`.env.example` is committed. Never put a real value in it.** A live key was pasted
+there on 2026-09-04 and caught before it was committed; that is the one file in this
+repo where a secret would be published.
 
 ### Today, because the clock is measured in weeks
 
@@ -93,8 +95,8 @@ reading. Their sign-off gets recorded in `06-decisions.md`.
 Closes D-03, D-14, D-15 and unblocks D-10, the returning-patient fast path that
 `04-targets.md` calls an economic necessity rather than a feature.
 
-**8 · NAMASTE portal account.** D-04, at <https://namaste.ayush.gov.in>. The code list
-is not downloadable without one.
+**8 · NAMASTE portal account.** Moved up to item 2 — it is the last unsourced code
+system now that ICD-11 is closed.
 
 ### Hard, may not close, worth one attempt
 
@@ -129,7 +131,7 @@ by name. Adopting it would also close finding B, since Indian language coverage 
 Bhashini's entire purpose. `asr.py` was written with exactly one seam for this and
 nothing above that seam changes.
 
-**Needs a decision:** ULCA / Bhashini API access. Free but registration-gated.
+**Status:** adopted and requested on 2026-09-04, awaiting a manager's approval on the ULCA portal. Still true that we use neither today.
 
 ### B · "Major regional languages" is in the brief; we ship two
 
@@ -186,17 +188,18 @@ between "they left it out" and "they refused to put it in" is the whole argument
 
 ## My list, and what each item waits on
 
-| Work | Waits on |
-|---|---|
-| Run the `--llm` eval, report online numbers beside the offline floor | Groq key |
-| Put a real prescription through the OCR pipeline and find out what breaks | Groq key or Tesseract, plus one photo |
-| Pull the TM2 + MMS linearisations, fill `codes.yaml`, flip provenance to `sourced` | ICD-11 credentials |
-| Hindi rendering of the physician summary (finding D) | nothing |
-| Name the HIS seam explicitly in `09-architecture.md` (finding E) | nothing |
-| Write the Samprapti and Aadhaar reasoning into the submission narrative (F, C) | your Aadhaar decision |
-| Bhashini adapter behind the existing ASR seam (finding A) | your decision + ULCA access |
-| Returning-patient fast path (D-10) | **your decision** — see below |
-| Tune the barge-in thresholds (D-17) | noise recordings |
+| Work | Waits on | Status |
+|---|---|---|
+| Run the `--llm` eval beside the offline floor | Groq key | **done 2026-09-04** |
+| Pull TM2 + MMS, fill `codes.yaml`, flip provenance | ICD-11 credentials | **done 2026-09-04** |
+| Returning-patient fast path (D-10) | your decision | **done 2026-09-03**, local source |
+| Put a real prescription through the OCR pipeline | Tesseract + one photo | blocked on both |
+| Hindi rendering of the physician summary (finding D) | nothing | open |
+| Name the HIS seam explicitly in `09-architecture.md` (finding E) | nothing | open |
+| Write the Samprapti and Aadhaar reasoning into the narrative (F, C) | nothing — both decided | open |
+| Bhashini adapter behind the existing ASR seam (finding A) | ULCA approval | waiting |
+| NAMASTE codes (D-04) | portal account | waiting |
+| Tune the barge-in thresholds (D-17) | noise recordings | waiting |
 
 ### Decided 2026-09-03
 

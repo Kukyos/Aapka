@@ -19,6 +19,7 @@ ontology/          the question graph, as data. No code. Editable without a rebu
   questions/*.yaml the question nodes, grouped by history section
   redflags.yaml    deterministic escalation rules
   codes.yaml       complaint -> NAMASTE / ICD-11, each entry provenance-tagged
+  cache/           codes pulled from an external terminology API, never hand-edited
 
 server/aapka/      Python. FastAPI at the edge, pure modules underneath.
   ontology.py      loader, validator, guard evaluator
@@ -33,7 +34,11 @@ server/aapka/      Python. FastAPI at the edge, pure modules underneath.
   summary.py       Module C — the physician-ready history
   fhir.py          Module D — FHIR R4 bundle
   abdm.py          ABDM transport (mock until credentials exist)
+  config.py        environment, with a working default for every value
   api.py           HTTP surface
+
+server/tools/      one-off fetchers
+  fetch_icd11.py   pulls ICD-11 TM2 and MMS codes from the WHO API into the cache
 
 server/eval/       scenarios + runner + scorer
 patient/           React kiosk
@@ -41,7 +46,7 @@ doctor/            React consultation view
 ```
 
 **`engine.py` imports nothing from FastAPI and touches no database.** It is a pure
-function of (ontology, session state) to next action. That is what makes 40 eval
+function of (ontology, session state) to next action. That is what makes 47 eval
 scenarios cheap to run and the whole interview testable without a server.
 
 ---

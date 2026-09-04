@@ -142,7 +142,7 @@ of a tertiary hospital's load and the department this problem statement is actua
   coverage columns are therefore firmer than the throughput columns.
 - The sweep uses a single scripted patient. Branching means a chest-pain interview and
   a skin-complaint interview cost different amounts. The eval harness reports the
-  spread across all 40 scenarios; this table is the shape, not the distribution.
+  spread across all 47 scenarios; this table is the shape, not the distribution.
 
 ---
 
