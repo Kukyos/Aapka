@@ -374,7 +374,10 @@ SCENARIOS: list[dict] = [
         "note": "Real speech, with filler. The offline keyword rung must still land it.",
         "script": _s(**{
             "cc.primary": "abdominal_pain", "hpi.onset": "gradual",
-            "hpi.duration": {"n": 3, "unit": "weeks"}, "hpi.severity": 6,
+            # "sat ke aas paas" is *seven*, and this label said six until the model
+            # rung disagreed with it. The harness caught a wrong ground truth in its
+            # own test set, which is the more useful half of running it with models.
+            "hpi.duration": {"n": 3, "unit": "weeks"}, "hpi.severity": 7,
             "hpi.associated": ["nausea"], "ros.danger_signs": ["none"],
         }),
         "utterances": {

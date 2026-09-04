@@ -30,9 +30,17 @@ class LLMResult:
     error: str | None = None
 
 
+# urllib sends "Python-urllib/3.x" by default, and the CDN in front of the inference
+# APIs refuses it outright — an HTTP 403 carrying Cloudflare's "error code: 1010",
+# which looks exactly like a rejected API key and is not one. Naming ourselves fixes it.
+USER_AGENT = "aapka-intake/1.0 (+https://github.com/kukyos/SIH2026)"
+
+
 def _post_json(url: str, payload: dict, headers: dict, timeout: float) -> dict:
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    req = urllib.request.Request(
+        url, data=data, headers={"User-Agent": USER_AGENT, **headers}, method="POST"
+    )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 

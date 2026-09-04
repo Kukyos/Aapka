@@ -25,6 +25,30 @@ Stated explicitly because a missing number is honest and an invented one is not.
 | `ocr_f1_handwritten` | pending real data — no handwritten prescriptions (D-01) |
 | `ocr_f1_printed` | pending real data (D-01) |
 
+## With the model rung on
+
+The table above is the offline run and stays the headline, because gate G1 says the
+network is not to be assumed. This is the same 47 scenarios with `--llm`, against Groq,
+run for the first time on 2026-09-04.
+
+| Metric | Offline | With models |
+|---|---|---|
+| Scenarios passed | 47 / 47 | 47 / 47 |
+| Red-flag recall | 9 / 9 | 9 / 9 |
+| Voice utterances mapped | 11 / 13 = 0.846 | **12 / 13 = 0.923** |
+
+One utterance out of thirteen is the whole difference, so read it as a direction rather
+than a rate — thirteen is far too small a denominator to quote as an accuracy figure.
+
+**What the first model run actually found was a bug in this harness.** Scenario
+`ms-01-rambling-voice` feeds the utterance *"sat ke aas paas"* — around seven — against
+a ground-truth severity of 6. The keyword rung left it unresolved and the scenario
+passed for two months. The model read it as 7, the harness flagged a mismapping, and the
+mislabelled one was ours. Ground truth corrected; the numbers above are post-fix.
+
+Red-flag recall is unchanged at 9 of 9, which is the result that matters: escalation is
+decided by deterministic rules and does not move when a model is switched on or off.
+
 ## By category
 
 | Category | Passed |

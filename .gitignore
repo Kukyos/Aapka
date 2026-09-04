@@ -30,3 +30,6 @@ Thumbs.db
 
 # build artefacts
 *.tsbuildinfo
+
+# Draft submission material. Local only.
+submission/

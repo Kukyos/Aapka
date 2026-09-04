@@ -37,7 +37,11 @@ def _env(key: str, default: str = "") -> str:
 # --------------------------------------------------------------------- inference
 GROQ_API_KEY = _env("GROQ_API_KEY")
 GROQ_BASE_URL = _env("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
-GROQ_TEXT_MODEL = _env("GROQ_TEXT_MODEL", "llama-3.3-70b-versatile")
+# Model ids move. Check `GET /v1/models` against the key in use before assuming a
+# default is still live — a retired id returns a 404 that reads like an auth failure.
+GROQ_TEXT_MODEL = _env("GROQ_TEXT_MODEL", "openai/gpt-oss-120b")
+# Vision is not on every Groq account. Where it is absent the OCR ladder falls straight
+# through to Tesseract, which is why that rung is not optional. See docs/11-deferred.md.
 GROQ_VISION_MODEL = _env("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 GROQ_ASR_MODEL = _env("GROQ_ASR_MODEL", "whisper-large-v3")
 
@@ -56,6 +60,21 @@ ABDM_MODE = _env("ABDM_MODE", "mock")
 ABDM_BASE_URL = _env("ABDM_BASE_URL", "")
 ABDM_CLIENT_ID = _env("ABDM_CLIENT_ID")
 ABDM_CLIENT_SECRET = _env("ABDM_CLIENT_SECRET")
+
+# --------------------------------------------------------------------- ICD-11
+# WHO ICD-11 API. Free, application-based, at https://icd.who.int/icdapi — and the only
+# correct route to the TM2 traditional-medicine codes: the freely downloadable Chapter
+# 26 PDF is TM1, East Asian medicine, whose codes would be wrong on an Ayurveda intake
+# rather than merely unsourced. See docs/10-unsourced.md.
+#
+# Note the two hosts. Tokens come from icdaccessmanagement.who.int; the API itself is
+# id.who.int. Putting the API host in the token URL is the usual first mistake.
+ICD11_CLIENT_ID = _env("ICD11_CLIENT_ID")
+ICD11_CLIENT_SECRET = _env("ICD11_CLIENT_SECRET")
+ICD11_TOKEN_URL = _env(
+    "ICD11_TOKEN_URL", "https://icdaccessmanagement.who.int/connect/token"
+)
+ICD11_BASE_URL = _env("ICD11_BASE_URL", "https://id.who.int")
 
 # --------------------------------------------------------------------- storage
 DB_PATH = Path(_env("DB_PATH", str(ROOT / "server" / "aapka.db")))
@@ -141,5 +160,6 @@ def status() -> dict[str, object]:
         "abdm_mode": ABDM_MODE,
         "prior_visit_source": PRIOR_VISIT_SOURCE,
         "abdm_credentials": bool(ABDM_CLIENT_ID and ABDM_CLIENT_SECRET),
+        "icd11_credentials": bool(ICD11_CLIENT_ID and ICD11_CLIENT_SECRET),
         "db": str(DB_PATH),
     }
