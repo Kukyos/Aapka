@@ -14,7 +14,7 @@ one is not.
 Every consumer of these values checks `provenance` and renders anything marked
 `PLACEHOLDER` as pending — never as a code, never as a finding.
 
-Last verified: 2026-09-03
+Last verified: 2026-09-04
 
 ---
 
@@ -53,7 +53,27 @@ for Ayurveda and map our 14 complaints onto it.
 
 ## 2 · ICD-11 TM2 codes — `ontology/codes.yaml`
 
-**Status:** all `PLACEHOLDER`, including the dosha findings.
+**Status: SOURCED for the dosha findings, deliberately `not_coded` for complaints.**
+
+Credentials were obtained on 2026-09-04 and TM2 was pulled through the WHO API. The
+cache is `ontology/cache/icd11-tm2-2025-01.json`; re-pull with
+`python -m tools.fetch_icd11`. Chapter 26 Module II carries 710 entities, 648 of them
+coded, across twelve disorder blocks and six pattern blocks.
+
+Sourced: `SR10` Vitiation of vāta, `SR15` Vitiation of pitta, `SR1A` Vitiation of kapha.
+These are *pattern* codes attached to the patient's own Vikriti answer and emitted as
+preliminary, patient-reported observations.
+
+Not coded, on purpose: every chief complaint. TM2's disorder codes are diagnoses —
+"Cough disorder (TM2)", "Enteric fever disorder (TM2)" — and a kiosk choosing one would
+be diagnosing. We have the codes and decline to use them there.
+
+Also present and unused: the `ST00`–`ST1Z` "Body constitution and temperament patterns"
+block. Those are Unani *mizaj* — hot, cold, moist, dry — not Ayurvedic Prakriti. Our
+Prakriti screen has no TM2 code because TM2 codes derangements and a constitution is
+not one.
+
+**Superseded notes from 2026-09-02:**
 
 **What we know, and can cite:**
 - ICD-11 Chapter 26 is the supplementary traditional-medicine chapter. It separates

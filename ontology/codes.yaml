@@ -6,139 +6,329 @@
 # against ICD-11 TM2.
 #
 # ---------------------------------------------------------------------------------
-# EVERY CODE BELOW IS A PLACEHOLDER. NONE OF THEM IS REAL.
+# STATUS, 2026-09-04. Three code systems, three different answers.
 #
-# This is deliberate, and it is the honest position. Three separate attempts to source
-# real codes on 2026-09-02 all failed for the same reason — the code lists are not
-# publicly downloadable:
+#   ICD-11 MMS   SOURCED. Pulled from the WHO ICD-11 API, release 2025-01, against
+#                credentials obtained on 2026-09-04. Every code below was returned by
+#                the API for the term recorded beside it, and is checkable at
+#                https://icd.who.int/browse/2025-01/mms/en
 #
-#   NAMASTE (NAMC)   namaste.ayush.gov.in publishes the portal, not the code list.
-#                    Published figure: 7,340 Ayush morbidity codes. Requires an account.
+#   ICD-11 TM2   SOURCED for dosha findings. Module II of Chapter 26 - Ayurveda,
+#                Siddha and Unani - reached through the same API and cached at
+#                ontology/cache/icd11-tm2-2025-01.json (710 entities, 648 coded).
+#                Re-pull with `python -m tools.fetch_icd11`.
 #
-#   ICD-11 TM2       Module 2 (Ayurveda, Siddha, Unani) was added in 2025. The freely
-#                    downloadable Chapter 26 PDF is Module 1 — East Asian medicine.
-#                    Its codes (SA00 Hypochondrium pain disorder, SA01 Jaundice
-#                    disorder, and so on) are real, but they are TCM patterns. Using
-#                    them for an Ayurveda intake would be a factual error, not a
-#                    shortcut, so they are not used here.
+#                NOT ASSIGNED for chief complaints, and that is a refusal rather than
+#                a gap. See the note above `complaints`.
 #
-#   ICD-11 MMS       The WHO browser is JavaScript-rendered and the API needs OAuth
-#                    client credentials (free, application-based, not yet obtained).
+#   NAMASTE      Still unsourced. namaste.ayush.gov.in publishes the portal, not the
+#                code list; an account is needed. Tracked as D-04.
 #
-# The alternative to placeholders was to write down codes that look plausible. For a
-# submission judged by the ministry that owns the NAMASTE portal, a fabricated code is
-# strictly worse than an empty one. Every consumer of this file — summary.py, fhir.py,
-# the doctor screen — checks `provenance` and renders unsourced codes as pending,
-# never as fact.
+# The trap we avoided, recorded because it is easy to fall into: the freely
+# downloadable Chapter 26 PDF is Module I - TM1, East Asian medicine. Its codes are
+# real and they are the wrong ones. An Ayurveda intake carrying a TCM pattern code
+# would be a factual error dressed up as diligence. TM2 is API-only.
 #
-# Tracked as docs/11-deferred.md D-04 and D-05.
+# Every consumer of this file - summary.py, fhir.py, the doctor screen - checks
+# `provenance` and renders anything not `sourced` as pending, never as fact.
+# `test_codes_file_invariant_holds` in server/tests/test_core.py enforces that a
+# `sourced` entry has a code and that a coded entry is marked `sourced`.
 # ---------------------------------------------------------------------------------
 
-version: 1
+version: 2
 
 provenance_levels:
   sourced: "Verified against a published, citable source. Safe to display as a code."
-  PLACEHOLDER: "Structure only. Never displayed as a code; rendered as 'pending' everywhere."
+  PLACEHOLDER: "Structure only. No source obtained. Rendered as pending everywhere."
+  not_coded: >-
+    Deliberately left uncoded. The source exists and was read; assigning a code from it
+    would assert something this system is not allowed to assert. Distinct from
+    PLACEHOLDER, which means the source could not be obtained at all.
 
-# How to close this out, so whoever gets portal access knows exactly what to fill in:
-#   1. Log in to namaste.ayush.gov.in, export the NAMC list for Ayurveda.
-#   2. Apply for ICD-11 API credentials at icd.who.int/icdapi (free).
-#   3. For each complaint below, fill `namaste.code`, `icd11_tm2.code` and
-#      `icd11_mms.code`, and change `provenance` to `sourced` with the export date.
-#   4. Run `python -m pytest server/tests/test_codes.py` — it asserts that anything
-#      marked `sourced` actually has a non-empty code, and vice versa.
+# ---------------------------------------------------------------------------------
+# Chief complaints.
+#
+# `icd11_mms` carries a SYMPTOM code, never a disease code - MD12 Cough, MG22 Fatigue,
+# ME82 Pain in joint. That is the correct register: the patient reported a symptom and
+# no one has examined them yet. Where the API surfaced a disease sharing the word
+# (8A8Z Headache disorders, CA23 Asthma, BA40 Angina pectoris) it was rejected.
+#
+# `icd11_tm2` is empty on every complaint, marked `not_coded`.
+#
+#   TM2 codes disorders and patterns: "Cough disorder (TM2)", "Severe fatigue disorder
+#   (TM2)", "Enteric fever disorder (TM2)". Attaching one of those to a patient who
+#   said "I have a cough" would be a traditional-medicine diagnosis made by a kiosk.
+#   Hard rule 1 forbids it and gate G3 says the physician is the authority.
+#
+#   The codes exist and we hold all 648 of them in the cache. They are the physician's
+#   to apply after examination, not ours to guess before it. This is the one place in
+#   the system where having the data and declining to use it is the correct answer.
+# ---------------------------------------------------------------------------------
 
 complaints:
 
   abdominal_pain:
-    label: {en: "Abdominal pain", hi: "पेट में दर्द"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Abdominal pain", provenance: PLACEHOLDER}
+    label: { en: "Abdominal pain", hi: "पेट में दर्द" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MD81
+      term: "Abdominal or pelvic pain"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   chest_pain:
-    label: {en: "Chest pain", hi: "छाती में दर्द"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Chest pain", provenance: PLACEHOLDER}
+    label: { en: "Chest pain", hi: "छाती में दर्द" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MD30.Z
+      term: "Chest pain, unspecified"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   headache:
-    label: {en: "Headache", hi: "सिर दर्द"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Headache", provenance: PLACEHOLDER}
+    label: { en: "Headache", hi: "सिर दर्द" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MB4D
+      term: "Headache, not elsewhere classified"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   joint_pain:
-    label: {en: "Joint pain", hi: "जोड़ों में दर्द"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Pain in joint", provenance: PLACEHOLDER}
+    label: { en: "Joint pain", hi: "जोड़ों में दर्द" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: ME82
+      term: "Pain in joint"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   breathlessness:
-    label: {en: "Breathlessness", hi: "साँस लेने में तकलीफ़"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Dyspnoea", provenance: PLACEHOLDER}
+    label: { en: "Breathlessness", hi: "साँस लेने में तकलीफ़" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MD11.5
+      term: "Dyspnoea"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   fever:
-    label: {en: "Fever", hi: "बुख़ार"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Fever", provenance: PLACEHOLDER}
+    label: { en: "Fever", hi: "बुख़ार" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MG26
+      term: "Fever of other or unknown origin"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   cough:
-    label: {en: "Cough", hi: "खाँसी"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Cough", provenance: PLACEHOLDER}
+    label: { en: "Cough", hi: "खाँसी" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MD12
+      term: "Cough"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   skin_problem:
-    label: {en: "Skin problem", hi: "त्वचा की समस्या"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Skin problem", hi: "त्वचा की समस्या" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: ME66
+      term: "Miscellaneous non-specific skin-related symptoms and signs"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   weakness_fatigue:
-    label: {en: "Weakness or fatigue", hi: "कमज़ोरी या थकान"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: "Malaise and fatigue", provenance: PLACEHOLDER}
+    label: { en: "Weakness or fatigue", hi: "कमज़ोरी या थकान" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MG22
+      term: "Fatigue"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   digestive_problem:
-    label: {en: "Digestive problem", hi: "पाचन की समस्या"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Digestive problem", hi: "पाचन की समस्या" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: ME1Y
+      term: "Other specified symptoms or signs involving the digestive system"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   urinary_problem:
-    label: {en: "Urinary problem", hi: "पेशाब की समस्या"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Urinary problem", hi: "पेशाब की समस्या" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MF59
+      term: "Urinary symptom or complaint"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   menstrual_problem:
-    label: {en: "Menstrual problem", hi: "माहवारी की समस्या"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Menstrual problem", hi: "माहवारी की समस्या" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: MF3Y
+      term: "Other specified symptoms, signs or clinical findings involving the female genital system"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   injury:
-    label: {en: "Injury", hi: "चोट"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Injury", hi: "चोट" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: ND56.Z
+      term: "Unspecified injury to unspecified part of trunk, limb or body region"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS release 2025-01"
 
   other:
-    label: {en: "Other", hi: "अन्य"}
-    namaste:   {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}
-    icd11_mms: {code: null, term: null, provenance: PLACEHOLDER}
+    label: { en: "Other", hi: "अन्य" }
+    namaste:
+      code: null
+      term: null
+      provenance: PLACEHOLDER
+    icd11_tm2:
+      code: null
+      term: null
+      provenance: not_coded
+    icd11_mms:
+      code: null
+      term: null
+      provenance: not_coded
+      note: >-
+        "Other" is a bucket on a touchscreen, not a clinical concept. What the
+        patient actually has is captured in cc.narration and coded, if at all,
+        by the physician.
 
-# Dosha findings from the Prakriti screen. TM2 is where these would be coded, and it
-# is the single strongest dual-coding demonstration available to this project — an
-# Ayurvedic constitutional finding carrying a WHO code. It stays empty until TM2 is
-# obtained (docs/11-deferred.md D-05).
+# ---------------------------------------------------------------------------------
+# Dosha findings.
+#
+# These DO carry TM2 codes, and the difference from the complaints above is the whole
+# argument. SR10, SR15 and SR1A are *pattern* codes for the vitiation of a dosha, and
+# they attach to what the patient said about their own present imbalance in the Vikriti
+# question - emitted as patient-reported and marked `unconfirmed` in the FHIR bundle,
+# for the physician to confirm, amend or reject.
+#
+# A pattern the patient reported, marked unconfirmed, is a structured history.
+# A disorder the kiosk chose would be a diagnosis. Only the first is ours to write.
+#
+# Also in TM2 and deliberately unused: the "Body constitution and temperament patterns"
+# block, ST00 to ST1Z. Those are Unani mizaj - hot, cold, moist and dry temperaments -
+# and they are not Ayurvedic Prakriti. Our abbreviated Prakriti screen carries no TM2
+# code at all, because TM2 codes derangements and Prakriti is a normal constitution
+# rather than a derangement. There is nothing there to point at.
+# ---------------------------------------------------------------------------------
+
 dosha_findings:
-  vata:  {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}
-  pitta: {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}
-  kapha: {icd11_tm2: {code: null, term: null, provenance: PLACEHOLDER}}
+  vata:
+    icd11_tm2:
+      code: SR10
+      term: "Vitiation of vāta pattern (TM2)"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"
+  pitta:
+    icd11_tm2:
+      code: SR15
+      term: "Vitiation of pitta pattern (TM2)"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"
+  kapha:
+    icd11_tm2:
+      code: SR1A
+      term: "Vitiation of kapha pattern (TM2)"
+      provenance: sourced
+      source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"

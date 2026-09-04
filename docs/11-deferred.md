@@ -7,7 +7,7 @@ surprise — if it is not in this file, we think it is done.
 Status key: **BLOCKER** (submission fails without it) · **GAP** (weakens a claim) ·
 **POLISH** (nice to have).
 
-Last updated: 2026-09-03
+Last updated: 2026-09-04
 
 ---
 
@@ -56,7 +56,19 @@ The portal does not publish the code list without an account.
 **Closes when:** someone with a NAMASTE portal login exports the Ayurveda morbidity
 code list (7,340 codes per published figures) and we map our 14 chief complaints onto it.
 
-### D-05 · ICD-11 TM2 codes are placeholders
+### D-05 · CLOSED 2026-09-04 · ICD-11 codes are sourced
+Credentials obtained, `server/tools/fetch_icd11.py` written, TM2 pulled and cached at
+`ontology/cache/icd11-tm2-2025-01.json` — 710 entities, 648 coded. 16 entries in
+`codes.yaml` are now `sourced`: 13 ICD-11 MMS symptom codes for the chief complaints,
+and SR10 / SR15 / SR1A for the dosha findings. Both reach the FHIR bundle.
+
+**One deliberate non-closure.** The TM2 field on every chief complaint is marked
+`not_coded` rather than filled. TM2 codes *disorders* — "Cough disorder (TM2)" — and
+attaching one to a patient who said they have a cough would be a diagnosis made by a
+kiosk, which hard rule 1 forbids. We hold all 648 codes and decline to use them there.
+A new provenance level, `not_coded`, distinguishes that refusal from a missing source.
+
+### D-05-OLD · ICD-11 TM2 codes are placeholders (superseded)
 TM2 (Ayurveda / Siddha / Unani) was added to ICD-11 in 2025. The publicly downloadable
 Chapter 26 PDF is **TM1** — East Asian medicine — and using those codes for an
 Ayurveda intake would be wrong, not merely unsourced.

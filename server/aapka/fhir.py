@@ -71,8 +71,29 @@ def _codeable(ont: Ontology, complaint: str | None) -> dict[str, Any]:
     }
 
 
+def _dosha_coding(ont: Ontology, slot: str, value: Any) -> dict[str, Any] | None:
+    """The ICD-11 TM2 pattern coding for a self-reported dosha imbalance, if there is one.
+
+    Only `ayush.vikriti` reaches here, and only ever as a *pattern* code — SR10, SR15,
+    SR1A, the vitiation of vata, pitta or kapha. That is what the patient described
+    about their own present state, and the Observation carrying it is `preliminary`
+    with the respondent attached, so a receiving system sees a patient report awaiting
+    a clinician rather than a finding.
+
+    Prakriti gets nothing here on purpose: TM2 codes derangements, and a constitution is
+    not a derangement. See the note in ontology/codes.yaml.
+    """
+    if slot != "ayush.vikriti":
+        return None
+    spec = ((ont.codes.get("dosha_findings") or {}).get(str(value)) or {}).get("icd11_tm2") or {}
+    if not (spec.get("code") and spec.get("provenance") == "sourced"):
+        return None
+    return {"system": SYS_ICD11_TM2, "code": spec["code"], "display": spec.get("term")}
+
+
 def _observation(
-    patient_ref: str, slot: str, value: Any, section: str, respondent: str, when: str
+    patient_ref: str, slot: str, value: Any, section: str, respondent: str, when: str,
+    extra_value_coding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """One captured finding.
 
@@ -118,6 +139,12 @@ def _observation(
             "coding": [{"system": SYS_LOCAL, "code": str(value)}],
             "text": str(value),
         }
+
+    # A standards-coded reading of the same value, where one exists and is sourced.
+    # It sits beside the local code rather than replacing it, so a system that does not
+    # know TM2 still reads the answer.
+    if extra_value_coding and "valueCodeableConcept" in obs:
+        obs["valueCodeableConcept"]["coding"].append(extra_value_coding)
 
     if respondent and respondent != "self":
         obs["performer"] = [{"display": f"Reported by {respondent} (proxy)"}]
@@ -171,7 +198,10 @@ def build_bundle(
         if slot.startswith("identity."):
             continue
         section = slot.split(".")[0]
-        observations.append(_observation(patient_uid, slot, value, section, respondent, when))
+        observations.append(_observation(
+            patient_uid, slot, value, section, respondent, when,
+            extra_value_coding=_dosha_coding(ont, slot, value),
+        ))
 
     for condition in session.slots.get("past.conditions") or []:
         if condition in {"none", "unsure"}:
