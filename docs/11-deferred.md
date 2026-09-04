@@ -21,6 +21,28 @@ handwritten and printed be reported separately; right now both rows read
 **Closes when:** 50+ photographed real prescriptions exist in `eval/documents/`.
 **Owner action:** Phase 0 item, longest lead time in the project. Start now.
 
+**First run, 2026-09-04.** Tesseract was installed and one prescription photograph went
+through the whole pipeline for the first time. It worked: OCR read it, the extractor
+classified it as a prescription and pulled out `Amoxicillin`, dose `1 tablet`, route
+`by mouth`, system `allopathic`.
+
+Three things that only a real image could have shown:
+
+1. **`route` did not exist as a field.** The extractor put "by mouth" in `frequency`,
+   because there was nowhere else for it to go. A field that does not exist is a field
+   a model will improvise into. Added, with the prompt now separating how much, how
+   often and how taken.
+2. **Date extraction returned null.** The date was legible to a human on the page and
+   came out of OCR mangled, so nothing matched. Chronological ordering — a Module B
+   requirement — silently degrades to undated whenever that happens.
+3. **The image was a stock sample, not a real Indian prescription.** Printed English,
+   invented names. So it proves the pipeline runs; it proves nothing about handwriting,
+   Devanagari, or a crumpled page photographed in a waiting hall. D-01 stays open and
+   the OCR rows in `13-eval-results.md` stay unreported.
+
+`eval/documents/` and `eval/noise/` are gitignored. They hold real patients' medical
+records; those stay on the machine that needs them and never enter a public repo.
+
 ### D-02 · No hospital ambient noise recordings
 Every ASR number in the repo is therefore unreported, not optimistic. `03-requirements.md`
 R4 is explicit that clean-audio numbers are meaningless for this deployment.

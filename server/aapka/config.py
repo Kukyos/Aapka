@@ -61,6 +61,12 @@ ABDM_BASE_URL = _env("ABDM_BASE_URL", "")
 ABDM_CLIENT_ID = _env("ABDM_CLIENT_ID")
 ABDM_CLIENT_SECRET = _env("ABDM_CLIENT_SECRET")
 
+# --------------------------------------------------------------------- OCR
+# Path to the tesseract binary. Blank means: look on PATH, then in the places the
+# Windows and Linux installers actually use. The Windows installer does not add itself
+# to PATH, so relying on PATH alone loses Module B on a fresh machine.
+TESSERACT_CMD = _env("TESSERACT_CMD")
+
 # --------------------------------------------------------------------- ICD-11
 # WHO ICD-11 API. Free, application-based, at https://icd.who.int/icdapi — and the only
 # correct route to the TM2 traditional-medicine codes: the freely downloadable Chapter

@@ -109,6 +109,10 @@ class Medication:
     name: str
     dose: str | None = None
     frequency: str | None = None
+    # Route was added after the first real prescription went through the pipeline: the
+    # extractor put "by mouth" in `frequency`, because there was nowhere else to put it.
+    # A field that does not exist is a field the model will improvise into.
+    route: str | None = None
     system: str | None = None  # allopathic | ayurvedic | ...
 
 
@@ -268,7 +272,8 @@ _EXTRACT_PROMPT = (
     '  "date": "YYYY-MM-DD" or null,\n'
     '  "diagnoses": ["..."],\n'
     '  "medications": [{"name": "...", "dose": "..." or null, '
-    '"frequency": "..." or null, "system": "allopathic"|"ayurvedic"|"homeopathic"|"siddha"|"unani"|null}],\n'
+    '"frequency": "..." or null, "route": "..." or null, '
+    '"system": "allopathic"|"ayurvedic"|"homeopathic"|"siddha"|"unani"|null}],\n'
     '  "procedures": ["..."]\n'
     "}\n\n"
     "Rules that matter more than completeness:\n"
@@ -277,6 +282,9 @@ _EXTRACT_PROMPT = (
     "- If a dose is unreadable use null. NEVER guess a dose — a wrong dose is worse "
     "than a missing one.\n"
     "- Do not add anything that is not on the page. An empty list is a correct answer.\n"
+    "- `dose` is how much (500mg, 2 tsp), `frequency` is how often (twice daily, BD, "
+    "1-0-1), `route` is how it is taken (by mouth, PO, topical). Keep them apart; if "
+    "only one is written, fill that one and leave the others null.\n"
     "- Ayurvedic, Siddha and Unani preparations are medications too. Record them, and "
     "set `system` accordingly.\n"
     "- `diagnoses` means conditions written on the document. Do NOT infer a diagnosis "
@@ -320,6 +328,7 @@ def structure(text: str, doc_id: str) -> Document:
                     name=str(med["name"]),
                     dose=med.get("dose") or None,
                     frequency=med.get("frequency") or None,
+                    route=med.get("route") or None,
                     system=med.get("system") or None,
                 )
             )

@@ -27,7 +27,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import llm
+from . import config, llm
 
 _READ_PROMPT = (
     "This is a photograph of an Indian medical document — a prescription, a laboratory "
@@ -51,12 +51,37 @@ class OCRResult:
     error: str | None = None
 
 
+# Where the Windows installer puts it. It does not add itself to PATH, and a demo
+# machine failing because of that would be an absurd way to lose Module B — "git clone
+# and one command" has to survive an installer's defaults. Set TESSERACT_CMD to
+# override; PATH still wins when tesseract is on it.
+_TESSERACT_FALLBACKS = (
+    "C:/Program Files/Tesseract-OCR/tesseract.exe",
+    "C:/Program Files (x86)/Tesseract-OCR/tesseract.exe",
+    "/usr/bin/tesseract",
+    "/usr/local/bin/tesseract",
+    "/opt/homebrew/bin/tesseract",
+)
+
+
+def tesseract_path() -> str | None:
+    """The tesseract binary, or None. PATH first, then the usual install locations."""
+    configured = config.TESSERACT_CMD
+    if configured:
+        return configured if Path(configured).exists() else None
+    found = shutil.which("tesseract")
+    if found:
+        return found
+    return next((p for p in _TESSERACT_FALLBACKS if Path(p).exists()), None)
+
+
 def tesseract_available() -> bool:
-    return shutil.which("tesseract") is not None
+    return tesseract_path() is not None
 
 
 def _tesseract(image: bytes) -> OCRResult:
-    if not tesseract_available():
+    binary = tesseract_path()
+    if binary is None:
         return OCRResult("", "tesseract", False, "tesseract is not installed")
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / "page.png"
@@ -66,7 +91,7 @@ def _tesseract(image: bytes) -> OCRResult:
             # traineddata is missing tesseract errors, so fall back to eng alone.
             for langs in ("eng+hin", "eng"):
                 proc = subprocess.run(
-                    ["tesseract", str(src), "stdout", "-l", langs],
+                    [binary, str(src), "stdout", "-l", langs],
                     capture_output=True,
                     timeout=60,
                 )
