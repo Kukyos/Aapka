@@ -32,7 +32,6 @@ It is not a records app. It is not a chatbot. It never diagnoses anything.
 | `13-eval-results.md` | Generated numbers. Never hand-edited. | When someone questions an accuracy claim. |
 | `14-novelties.md` | Proposed differentiators, and which ones survived the gates. | When a new feature idea shows up. |
 | `15-what-you-can-unblock.md` | What only the owner can do, and the audit against the brief. | When you have time and want the highest-leverage thing. |
-| `16-setup-guides.md` | Tesseract and the NAMASTE portal, step by step. | When setting up either of those. |
 
 ## The five things that decide this
 
@@ -60,7 +59,8 @@ are stale, `11-deferred.md` is the live picture. What is actually outstanding ne
 legwork, not code:
 
 1. **Install Tesseract** — five minutes, and Module B has never once run without it.
-   Guide in `16-setup-guides.md` (D-01 is still needed to get a number out of it)
+   `winget install UB-Mannheim.TesseractOCR`, tick Hindi in the components screen, then
+   add it to PATH by hand (D-01 is still needed to get a number out of it)
 2. Start collecting **handwritten prescriptions** — longest lead time in the project (D-01)
 3. Record **hospital ambient noise** — no ASR number is reportable without it (D-02)
 4. Get the red-flag list **read by a clinician** — the one place being wrong hurts someone (D-13)

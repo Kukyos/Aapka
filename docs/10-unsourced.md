@@ -49,6 +49,17 @@ not a downloadable terminology file. No public API was found.
 **How to close it:** an account on namaste.ayush.gov.in, then export the NAMC list
 for Ayurveda and map our 14 complaints onto it.
 
+**The rule that governs that mapping, decided in advance.** Our fourteen complaints are
+patient-reported *symptoms*. If NAMC turns out to be a list of Ayurvedic *diagnoses* —
+the way ICD-11 TM2 did — then the same refusal applies: hold the codes, do not attach
+them to a chief complaint, and mark the slot `not_coded` rather than `PLACEHOLDER`. A
+kiosk choosing a diagnosis is the one thing this system never does. Read the list before
+mapping it.
+
+Also worth taking from the portal while logged in: whether NAMASTE publishes its own
+crosswalk to ICD-11 TM2. India has a published dual-coding roadmap, and if the mapping
+ships then our TM2 side is already sourced and the two systems emit together.
+
 ---
 
 ## 2 · ICD-11 TM2 codes — `ontology/codes.yaml`

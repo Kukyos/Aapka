@@ -44,12 +44,10 @@ That is not "the cloud tier is untested" — it is the whole of Module B.
 
 **1 · Install Tesseract.** The one remaining item that unblocks an entire module and
 needs nobody else's approval. `winget install UB-Mannheim.TesseractOCR`, then restart the
-shell. Step by step, including the Windows PATH detail that catches people, is in
-`16-setup-guides.md`.
+shell. The installer does not add itself to PATH, and Hindi language data is a checkbox at install time.
 
 **2 · Get a NAMASTE portal account.** D-04, and the last unsourced code system now that
-ICD-11 is closed. It is a government portal and the flow is not obvious; there is a
-walkthrough in `16-setup-guides.md`.
+ICD-11 is closed. It is a government portal; the code list is behind an account and there is no public API.
 
 **3 · Bhashini access — requested 2026-09-04, awaiting approval.** Registered at
 <https://bhashini.gov.in/ulca/user/register>; the key request needs a manager's approval
