@@ -5,3 +5,8 @@ PyYAML>=6.0
 python-multipart>=0.0.12
 pytest>=8.3
 httpx>=0.27
+
+# Only `tools/fetch_namaste.py` needs this — the NAMASTE morbidity codes ship as
+# legacy .xls. Nothing the server imports at runtime touches it, so a missing xlrd
+# breaks the one-off code fetch and nothing else.
+xlrd>=2.0

@@ -539,3 +539,39 @@ def test_prior_visit_store_holds_no_abha_number(tmp_path, monkeypatch, ont):
 
     store.forget_visit(abha)
     assert store.recall_visit(abha) is None
+
+
+def test_dosha_codes_match_the_published_crosswalk(ont):
+    """`codes.yaml` must agree with the terminology files it was filled from.
+
+    Both halves of the dual coding are load-bearing claims: the NAMASTE code comes from
+    the ministry's own NAMC export, the TM2 code from the WHO API, and the *pairing*
+    comes from the NAMC export putting them in the same row. This asserts all three
+    still line up, so a re-parse or a hand edit cannot silently drift.
+    """
+    cache = Path(__file__).resolve().parents[2] / "ontology" / "cache"
+    namc = json.loads((cache / "namaste-namc.json").read_text(encoding="utf-8"))
+    who = json.loads((cache / "icd11-tm2-2025-01.json").read_text(encoding="utf-8"))
+
+    published = {
+        e["code"]: e["icd11_tm2"]
+        for e in namc["entries"]
+        if e.get("code") and e.get("icd11_tm2")
+    }
+    who_titles = {r["code"]: r["title"] for r in who["entities"] if r["code"]}
+
+    for dosha, entry in ont.codes["dosha_findings"].items():
+        namaste_code = entry["namaste"]["code"]
+        tm2_code = entry["icd11_tm2"]["code"]
+
+        assert namaste_code in published, f"{dosha}: {namaste_code} not in the NAMC export"
+        assert published[namaste_code]["code"] == tm2_code, (
+            f"{dosha}: the export pairs {namaste_code} with "
+            f"{published[namaste_code]['code']}, not {tm2_code}"
+        )
+        # Only exact equivalences are emitted as codes. An approximate mapping would
+        # have to be labelled as one rather than passed off as the same concept.
+        assert published[namaste_code]["equivalence"] == "equivalent"
+        assert entry["icd11_tm2"]["equivalence"] == "equivalent"
+        # And the TM2 term we display is WHO's own wording, not a paraphrase.
+        assert entry["icd11_tm2"]["term"] == who_titles[tm2_code]

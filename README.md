@@ -157,12 +157,16 @@ Stated up front because a judge will look for exactly these:
 - **ABDM transport is mocked.** The FHIR R4 bundle is real and structurally validated;
   the sandbox is not yet registered. Every mock response says so and the doctor screen
   renders the notice in its footer. One config flag switches it.
-- **ICD-11 codes are sourced; NAMASTE codes are not.** The 13 complaint codes and the
-  three dosha pattern codes were pulled from the WHO ICD-11 API on 2026-09-04 and are
-  checkable at <https://icd.who.int/browse/2025-01/mms/en>. NAMASTE stays empty — that
-  list is not publicly downloadable, and a fabricated code is the specific failure mode
-  the ministry that owns the portal would catch. A test enforces that no unverified
-  code can leave the system.
+- **Every code we emit is sourced, and none was typed by hand.** ICD-11 came from the
+  WHO API; NAMASTE came from the ministry's own morbidity code export, committed at
+  `ontology/source/`. Both are re-fetchable (`tools/fetch_icd11.py`,
+  `tools/fetch_namaste.py`) and a test enforces that no unverified code can leave the
+  system.
+- **The dual coding is real, and so is the crosswalk behind it.** The NAMC export
+  carries the official NAMASTE-to-ICD-11-TM2 mapping inside its code column — 807
+  mapped rows, 374 of which cross-validate character-for-character against the title
+  the WHO API independently returns. It also distinguishes exact equivalences from
+  approximate ones; we keep that distinction and emit only the exact ones as codes.
 - **No TM2 code is attached to a chief complaint, and that is deliberate.** TM2 codes
   disorders — "Cough disorder (TM2)" — so attaching one to a patient who said they have
   a cough would be a diagnosis made by a kiosk. We hold all 648 TM2 codes and decline

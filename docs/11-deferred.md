@@ -50,7 +50,23 @@ changes expected beyond configuration — that is the point of the split.
 These are tracked in detail in `10-unsourced.md`. Summarised here because they are
 also deferred work, not just missing citations.
 
-### D-04 · NAMASTE codes are placeholders
+### D-04 · CLOSED 2026-09-04 · NAMASTE codes are sourced
+An official SIH export of all four morbidity code lists was obtained; the workbooks are
+committed at `ontology/source/` and parsed by `python -m tools.fetch_namaste`. The three
+dosha findings now carry NAMC codes, dual-coded with the ICD-11 TM2 codes the export
+itself pairs them with.
+
+The export also yielded the **official NAMASTE-to-TM2 crosswalk** — 807 mapped rows,
+374 cross-validating exactly against the WHO API, and an exact/approximate distinction
+we preserve as FHIR ConceptMap `equivalence`. Both halves of the dual coding promised in
+D2 now come from published government sources.
+
+Chief complaints stay `not_coded` for NAMASTE, on the rule decided in advance: NAMC is a
+list of diagnostic conditions, and a kiosk choosing one would be diagnosing.
+`test_dosha_codes_match_the_published_crosswalk` asserts `codes.yaml` and the parsed
+export cannot drift apart.
+
+### D-04 · superseded detail, kept for the trail
 `ontology/codes.yaml` has the right shape and every entry is marked `PLACEHOLDER`.
 The portal does not publish the code list without an account.
 **Closes when:** someone with a NAMASTE portal login exports the Ayurveda morbidity

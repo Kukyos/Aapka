@@ -33,7 +33,55 @@ non-empty value must be marked `sourced`. You cannot quietly promote a guess.
 
 ## 1 · NAMASTE morbidity codes — `ontology/codes.yaml`
 
-**Status:** all 14 chief complaints marked `PLACEHOLDER`.
+**Status: SOURCED for dosha findings, deliberately `not_coded` for complaints.**
+
+An official SIH-purposed export of the morbidity code lists was obtained on 2026-09-04
+and the four workbooks are committed at `ontology/source/`:
+
+| System | Terms |
+|---|---|
+| NAMC, National Ayurveda Morbidity Codes | 2,910 |
+| NSMC, National Siddha Morbidity Codes | 1,926 |
+| NUMC, National Unani Morbidity Codes | 2,522 |
+| NAMASTE ICD-10 mapping sheet | 11,145 rows |
+
+`python -m tools.fetch_namaste` parses them to `ontology/cache/`. Sourced from it:
+`AAA-2.1` vātaprakopaḥ, `ABA-2.1` pittaprakopaḥ, `ACA-2.1` kaphaprakopaḥ, which are
+exactly our three dosha findings.
+
+### The crosswalk was hiding in the code column
+
+The NAMC export carries the **official NAMASTE to ICD-11 TM2 mapping**, undocumented and
+unlabelled, inside its `NAMC_CODE` field: a row reading `SR11 (AAA-1)` is a NAMASTE code
+paired with the WHO TM2 code it maps to. 807 of the 2,910 rows carry one.
+
+Two properties make it trustworthy rather than merely present:
+
+- **It cross-validates.** 374 of the pairs carry an English label character-identical to
+  the title the WHO API independently returns for that TM2 code. Two separate published
+  sources agreeing is a stronger citation than either alone.
+- **It distinguishes exact from approximate.** Rows whose English name ends in `⇒` are
+  approximate mappings; rows without it are exact equivalences. The split is almost
+  perfect — 374 no-arrow exact against 428 arrow-marked divergent, with 5 anomalies —
+  so the marker is theirs, not our inference. We record it as FHIR ConceptMap
+  `equivalence`, and only `equivalent` pairs are emitted as codes.
+
+Token order is not reliable — `SR11 (AAA-1)` and `AAB-39(SP1Y)` reverse it — so the WHO
+cache decides which token is which, and `fetch_namaste` refuses to run without it rather
+than guessing.
+
+### Why the complaints stay uncoded
+
+NAMC answers at the **disorder** register: "Fever disorder (TM2)", "Abdominal pain
+disorder (TM2)", "Dyspnoea disorder (TM2)". Its own root node is
+`AYU vyādhi-viniścayaḥ`, *diagnostic conditions*. Attaching one to a patient who said
+they have a fever would be a diagnosis made by a kiosk.
+
+This was decided before the list was read — see the rule recorded below — which is the
+only reason it can be trusted now that the codes are in hand and attaching them would
+have been easy.
+
+**Superseded notes from 2026-09-02:**
 
 **What we know, and can cite:**
 - The National Ayush Morbidity Codes (NAMC, plus NSMC for Siddha and NUMC for Unani)

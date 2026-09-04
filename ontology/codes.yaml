@@ -21,8 +21,19 @@
 #                NOT ASSIGNED for chief complaints, and that is a refusal rather than
 #                a gap. See the note above `complaints`.
 #
-#   NAMASTE      Still unsourced. namaste.ayush.gov.in publishes the portal, not the
-#                code list; an account is needed. Tracked as D-04.
+#   NAMASTE      SOURCED for dosha findings. The four official morbidity code exports
+#                (NAMC 2,910 terms, NSMC 1,926, NUMC 2,522, and the ICD-10 sheet with
+#                11,145 rows) are in ontology/source/ and parsed to ontology/cache/ by
+#                `python -m tools.fetch_namaste`.
+#
+#                NOT ASSIGNED for chief complaints, for the same reason as TM2 and
+#                decided before the list was read.
+#
+#                The NAMC export also carries the official NAMASTE-to-TM2 crosswalk,
+#                hidden in its code column: 807 of 2,910 rows pair a NAMASTE code with
+#                a WHO TM2 code, 379 as exact equivalences and 428 marked approximate
+#                by an arrow in the English name. Both halves of the dual coding this
+#                project promised therefore come from published government sources.
 #
 # The trap we avoided, recorded because it is easy to fall into: the freely
 # downloadable Chapter 26 PDF is Module I - TM1, East Asian medicine. Its codes are
@@ -53,16 +64,22 @@ provenance_levels:
 # no one has examined them yet. Where the API surfaced a disease sharing the word
 # (8A8Z Headache disorders, CA23 Asthma, BA40 Angina pectoris) it was rejected.
 #
-# `icd11_tm2` is empty on every complaint, marked `not_coded`.
+# `namaste` and `icd11_tm2` are both empty on every complaint, marked `not_coded`
+# rather than `PLACEHOLDER`. We hold both lists in full and are declining to use them
+# here, which is a different statement from not having them.
 #
-#   TM2 codes disorders and patterns: "Cough disorder (TM2)", "Severe fatigue disorder
-#   (TM2)", "Enteric fever disorder (TM2)". Attaching one of those to a patient who
-#   said "I have a cough" would be a traditional-medicine diagnosis made by a kiosk.
-#   Hard rule 1 forbids it and gate G3 says the physician is the authority.
+#   Both systems code disorders. TM2 offers "Cough disorder (TM2)" and "Enteric fever
+#   disorder (TM2)". NAMC offers "Fever disorder" and "Abdominal pain disorder", and
+#   its own root node is `AYU vyadhi-viniscayah` - *diagnostic conditions*. Attaching
+#   one of those to a patient who said "I have a cough" would be a traditional-medicine
+#   diagnosis made by a kiosk. Hard rule 1 forbids it and gate G3 says the physician
+#   is the authority.
 #
-#   The codes exist and we hold all 648 of them in the cache. They are the physician's
-#   to apply after examination, not ours to guess before it. This is the one place in
-#   the system where having the data and declining to use it is the correct answer.
+#   2,910 NAMASTE terms and 648 TM2 codes sit in ontology/cache/. They are the
+#   physician's to apply after examination, not ours to guess before it. This is the
+#   one place where having the data and declining to use it is the correct engineering
+#   - and the rule was written down before either list arrived, which is the only
+#   reason it can be trusted now that using them would be easy.
 # ---------------------------------------------------------------------------------
 
 complaints:
@@ -72,7 +89,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -88,7 +105,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -104,7 +121,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -120,7 +137,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -136,7 +153,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -152,7 +169,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -168,7 +185,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -184,7 +201,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -200,7 +217,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -216,7 +233,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -232,7 +249,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -248,7 +265,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -264,7 +281,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -280,7 +297,7 @@ complaints:
     namaste:
       code: null
       term: null
-      provenance: PLACEHOLDER
+      provenance: not_coded
     icd11_tm2:
       code: null
       term: null
@@ -315,20 +332,47 @@ complaints:
 
 dosha_findings:
   vata:
+    namaste:
+      code: AAA-2.1
+      term: "vātaprakopaḥ"
+      devanagari: "वातप्रकोपः"
+      provenance: sourced
+      source: "NAMC, National Ayurveda Morbidity Codes, Ministry of Ayush export"
     icd11_tm2:
       code: SR10
       term: "Vitiation of vāta pattern (TM2)"
       provenance: sourced
       source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"
+      # The NAMC export pairs this NAMASTE term with this TM2 code and does
+      # not mark it approximate, so the two are the same concept.
+      equivalence: equivalent
   pitta:
+    namaste:
+      code: ABA-2.1
+      term: "pittaprakopaḥ"
+      devanagari: "पित्तप्रकोपः"
+      provenance: sourced
+      source: "NAMC, National Ayurveda Morbidity Codes, Ministry of Ayush export"
     icd11_tm2:
       code: SR15
       term: "Vitiation of pitta pattern (TM2)"
       provenance: sourced
       source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"
+      # The NAMC export pairs this NAMASTE term with this TM2 code and does
+      # not mark it approximate, so the two are the same concept.
+      equivalence: equivalent
   kapha:
+    namaste:
+      code: ACA-2.1
+      term: "kaphaprakopaḥ"
+      devanagari: "कफप्रकोपः"
+      provenance: sourced
+      source: "NAMC, National Ayurveda Morbidity Codes, Ministry of Ayush export"
     icd11_tm2:
       code: SR1A
       term: "Vitiation of kapha pattern (TM2)"
       provenance: sourced
       source: "WHO ICD-11 API, MMS 2025-01, Chapter 26 Module II"
+      # The NAMC export pairs this NAMASTE term with this TM2 code and does
+      # not mark it approximate, so the two are the same concept.
+      equivalence: equivalent

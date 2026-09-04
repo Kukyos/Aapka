@@ -33,3 +33,11 @@ Thumbs.db
 
 # Draft submission material. Local only.
 submission/
+
+# Real patient documents. Prescriptions, lab reports, discharge summaries and the
+# photographs of them used to test the OCR pipeline. These are somebody's medical
+# records: they stay on the machine that needs them and never enter a public repo,
+# whoever they belong to and however anonymous they look.
+server/eval/documents/
+server/eval/noise/
+*.prescription.*

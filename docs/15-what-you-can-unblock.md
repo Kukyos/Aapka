@@ -46,8 +46,9 @@ That is not "the cloud tier is untested" — it is the whole of Module B.
 needs nobody else's approval. `winget install UB-Mannheim.TesseractOCR`, then restart the
 shell. The installer does not add itself to PATH, and Hindi language data is a checkbox at install time.
 
-**2 · Get a NAMASTE portal account.** D-04, and the last unsourced code system now that
-ICD-11 is closed. It is a government portal; the code list is behind an account and there is no public API.
+**2 · ~~Get a NAMASTE portal account~~ — done 2026-09-04.** An official SIH export of
+all four morbidity code lists was obtained, and it turned out to carry the official
+NAMASTE-to-ICD-11-TM2 crosswalk as well. D-04 closed.
 
 **3 · Bhashini access — requested 2026-09-04, awaiting approval.** Registered at
 <https://bhashini.gov.in/ulca/user/register>; the key request needs a manager's approval
